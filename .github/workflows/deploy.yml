@@ -4,9 +4,16 @@ on:
   push:
     branches: [main, feature/DevOpsTest]
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository_owner }}/nginx-app
 
     steps:
       - name: Checkout
@@ -14,20 +21,24 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t your-dockerhub/nginx-app:${{ github.sha }} .
+          docker build -t ${REGISTRY}/${IMAGE_NAME}:${{ github.sha }} .
 
-      - name: Login to DockerHub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u your-user --password-stdin
+      - name: Login to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${REGISTRY} -u ${{ github.actor }} --password-stdin
 
       - name: Push image
-        run: docker push your-dockerhub/nginx-app:${{ github.sha }}
+        run: docker push ${REGISTRY}/${IMAGE_NAME}:${{ github.sha }}
 
       - name: Update GitOps repo
         run: |
-          git clone https://github.com/your-user/gitops.git
+          git clone https://x-access-token:${{ secrets.GITOPS_TOKEN }}@github.com/TUES-2026-PBL-11-klas/CS-CGM-DEVOPS
           cd gitops/apps/nginx
-          sed -i "s|image: .*|image: your-dockerhub/nginx-app:${{ github.sha }}|" deployment.yaml
+          sed -i "s|image: .*|image: ${REGISTRY}/${IMAGE_NAME}:${{ github.sha }}|" deployment.yaml
           git config user.name "ci"
           git config user.email "ci@bot.com"
-          git commit -am "Update image"
-          git push
+          if git diff --quiet; then
+            echo "No manifest changes to commit"
+          else
+            git commit -am "Update image"
+            git push
+          fi
