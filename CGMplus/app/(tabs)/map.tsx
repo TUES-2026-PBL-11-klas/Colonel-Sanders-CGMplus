@@ -1,21 +1,11 @@
-import { StyleSheet } from 'react-native';
+import { tabScreenStyles } from '@/constants/tab-screens';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
 export default function ExploreScreen() {
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={tabScreenStyles.container}>
       <ThemedText type="title">Explore</ThemedText>
     </ThemedView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 0.1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    justifyContent: 'center',
-  },
-});
