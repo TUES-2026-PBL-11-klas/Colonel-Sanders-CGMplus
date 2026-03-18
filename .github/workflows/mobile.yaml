@@ -4,11 +4,13 @@ on:
   push:
     branches: 
       - dev/mobile
-    #[main, develop]
   pull_request:
     branches:
       - dev/mobile 
-    #[main, develop]
+
+defaults:
+  run:
+    working-directory: CGMplus
 
 jobs:
   expo-ci:
@@ -23,6 +25,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          a: CGMplus/package-lock.json
 
       - name: Install dependencies
         run: npm install
