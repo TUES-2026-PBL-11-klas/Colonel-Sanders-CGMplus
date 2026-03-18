@@ -24,19 +24,19 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t ${REGISTRY}/${IMAGE_NAME}:${{ github.sha }} .
+          docker build -t ${REGISTRY}/${IMAGE_NAME_LC}:${{ github.sha }} .
 
       - name: Login to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${REGISTRY} -u ${{ github.actor }} --password-stdin
 
       - name: Push image
-        run: docker push ${REGISTRY}/${IMAGE_NAME}:${{ github.sha }}
+        run: docker push ${REGISTRY}/${IMAGE_NAME_LC}:${{ github.sha }}
 
       - name: Update GitOps repo
         run: |
           git clone https://x-access-token:${{ secrets.GITOPS_TOKEN }}@github.com/TUES-2026-PBL-11-klas/CS-CGM-DEVOPS
           cd gitops/apps/nginx
-          sed -i "s|image: .*|image: ${REGISTRY}/${IMAGE_NAME}:${{ github.sha }}|" deployment.yaml
+          sed -i "s|image: .*|image: ${REGISTRY}/${IMAGE_NAME_LC}:${{ github.sha }}|" deployment.yaml
           git config user.name "ci"
           git config user.email "ci@bot.com"
           if git diff --quiet; then
