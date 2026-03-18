@@ -34,14 +34,20 @@ jobs:
 
       - name: Update GitOps repo
         run: |
-          git clone https://x-access-token:${{ secrets.GITOPS_TOKEN }}@github.com/TUES-2026-PBL-11-klas/CS-CGM-DEVOPS
+          git clone https://x-access-token:${{ secrets.GITOPS_TOKEN }}@github.com/TUES-2026-PBL-11-klas/CS-CGM-DEVOPS.git
+
           cd CS-CGM-DEVOPS/services/nginx
+
           sed -i "s|image: .*|image: ${REGISTRY}/${IMAGE_NAME_LC}:${{ github.sha }}|" deployment.yaml
+
           git config user.name "ci"
           git config user.email "ci@bot.com"
-          if git diff --quiet; then
+
+          git add deployment.yaml
+
+          if git diff --cached --quiet; then
             echo "No manifest changes to commit"
           else
-            git commit -am "Update image"
+            git commit -m "Update image"
             git push
           fi
