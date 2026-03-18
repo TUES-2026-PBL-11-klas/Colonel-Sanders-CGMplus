@@ -2,11 +2,11 @@ name: Expo CI
 
 on:
   push:
-    branches: 
+    branches:
       - dev/mobile
   pull_request:
     branches:
-      - dev/mobile 
+      - dev/mobile
 
 defaults:
   run:
@@ -32,7 +32,7 @@ jobs:
 
       - name: Run lint
         run: npm run lint --if-present
-      
+
       - name: Type check
         run: npx tsc --noEmit
 
