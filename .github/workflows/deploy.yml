@@ -1,0 +1,33 @@
+name: Build and Update GitOps
+
+on:
+  push:
+    branches: [main, feature/DevOpsTest]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t your-dockerhub/nginx-app:${{ github.sha }} .
+
+      - name: Login to DockerHub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u your-user --password-stdin
+
+      - name: Push image
+        run: docker push your-dockerhub/nginx-app:${{ github.sha }}
+
+      - name: Update GitOps repo
+        run: |
+          git clone https://github.com/your-user/gitops.git
+          cd gitops/apps/nginx
+          sed -i "s|image: .*|image: your-dockerhub/nginx-app:${{ github.sha }}|" deployment.yaml
+          git config user.name "ci"
+          git config user.email "ci@bot.com"
+          git commit -am "Update image"
+          git push
