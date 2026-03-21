@@ -2,6 +2,7 @@ from flask import Flask
 from src.extensions import api
 from src.routes.health import blp as HealthBlueprint
 
+
 def create_app():
     app = Flask(__name__)
 
@@ -12,7 +13,8 @@ def create_app():
         "OPENAPI_JSON_PATH": "openapi.json",
         "OPENAPI_URL_PREFIX": "/docs",
         "OPENAPI_SWAGGER_UI_PATH": "/",
-        "OPENAPI_SWAGGER_UI_URL": "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
+        "OPENAPI_SWAGGER_UI_URL":
+        "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
     })
 
     api.init_app(app)
