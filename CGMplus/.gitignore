@@ -42,3 +42,6 @@ app-example
 /ios
 /android
 .vscode/
+
+# mock data
+constants/mock-data.ts
