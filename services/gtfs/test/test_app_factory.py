@@ -11,7 +11,7 @@ class TestAppFactory:
         assert app.config["TESTING"] is True
 
     def test_api_title_config(self, app):
-        assert app.config["API_TITLE"] == "My Microservice"
+        assert app.config["API_TITLE"] == "GTFS Microservice"
 
     def test_api_version_config(self, app):
         assert app.config["API_VERSION"] == "v1"

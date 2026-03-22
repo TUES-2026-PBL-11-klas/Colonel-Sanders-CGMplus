@@ -10,7 +10,7 @@ def _stop_time_event(ste) -> dict:
                 ste.time,
                 tz=timezone.utc
             ).isoformat()
-            if ste.time
+            if ste.time is not None
             else None
         ),
         "uncertainty": ste.uncertainty if ste.uncertainty else None,
