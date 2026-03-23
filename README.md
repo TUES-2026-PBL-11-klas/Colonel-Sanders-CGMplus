@@ -43,27 +43,33 @@ terraform/
 
 ## Step-by-step dev/test setup (local machine)
 
+**Recommended: Read [KIND-SETUP.md](KIND-SETUP.md) for automated cluster bootstrap.**
+
 ### 1) Prerequisites
 
 Install:
 
-1. Docker Desktop
-2. kubectl
-3. k3s (or Minikube; k3s recommended for this flow)
-4. Terraform >= 1.7
-5. Python 3.10+
-6. Helm 3
-7. Argo CD CLI (optional but recommended)
+1. Docker Desktop - https://www.docker.com/products/docker-desktop
+2. kind - `choco install kind` or `brew install kind`
+3. kubectl - `choco install kubernetes-cli` or `brew install kubectl`
+4. Helm 3 - `choco install helm` or `brew install helm`
+5. Terraform >= 1.7 - `choco install terraform` or `brew install terraform`
+6. Python 3.10+ (for pre-commit and GTFS development)
 
-### 2) Enable local cluster
+### 2) Create Local Cluster with kind
 
-Example for k3s:
-
-```bash
-kubectl get nodes
+**Windows PowerShell:**
+```powershell
+.\kind-cluster-setup.ps1
 ```
 
-Verify the cluster is reachable before any Terraform apply.
+**macOS/Linux:**
+```bash
+chmod +x kind-cluster-setup.sh
+./kind-cluster-setup.sh
+```
+
+This creates a single-node Kubernetes cluster in Docker, ideal for dev/test.
 
 ### 3) Configure pre-commit hooks
 
