@@ -10,19 +10,28 @@ export const unstable_settings = {
   anchor: '(tabs)',
 };
 
+function AppShell() {
+  return (
+    <>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+        <Stack.Screen name="admin" options={{ title: 'Admin Panel' }} />
+      </Stack>
+      <StatusBar style="auto" translucent={false} />
+    </>
+  );
+}
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
     <SafeAreaProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-          <Stack.Screen name="admin" options={{ title: 'Admin Panel' }} />
-        </Stack>
-        <StatusBar style="auto" translucent={false} />
+        <AppShell />
       </ThemeProvider>
     </SafeAreaProvider>
   );
 }
+
