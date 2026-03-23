@@ -2,7 +2,16 @@ name: GTFS CI
 
 on:
   push:
-    branches: [ "svc/gtfs" ]
+    branches: ["svc/gtfs", "main"]
+    paths:
+      - services/gtfs/**
+      - .github/workflows/gtfs.yaml
+  pull_request:
+    branches: ["main"]
+    paths:
+      - services/gtfs/**
+      - .github/workflows/gtfs.yaml
+  workflow_dispatch:
 
 jobs:
   test:
@@ -36,6 +45,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Secret scan (Gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -79,3 +93,22 @@ jobs:
             echo "Waiting for app... attempt $i"
             sleep 2
           done
+
+      - name: Notify Discord
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "DISCORD_WEBHOOK_URL is not set; skipping notification"
+            exit 0
+          fi
+
+          STATUS="${{ job.status }}"
+          BRANCH="${{ github.ref_name }}"
+          ACTOR="${{ github.actor }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          curl -sS -H "Content-Type: application/json" \
+            -d "{\"content\":\"[GTFS CI] status: ${STATUS} | branch: ${BRANCH} | actor: ${ACTOR} | ${RUN_URL}\"}" \
+            "$DISCORD_WEBHOOK_URL"

@@ -1,19 +1,22 @@
-name: Build and Update GitOps
+name: Build and Deploy GTFS (GitOps)
 
 on:
   push:
-    branches: [main, feature/DevOpsTest]
+    branches: [main]
+    paths-ignore:
+      - gitops/**
+  workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 jobs:
-  build:
+  build-and-update-gitops:
     runs-on: ubuntu-latest
     env:
       REGISTRY: ghcr.io
-      IMAGE_NAME: ${{ github.repository_owner }}/nginx-app
+      IMAGE_NAME: ${{ github.repository_owner }}/gtfs
 
     steps:
       - name: Checkout
@@ -24,7 +27,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t ${REGISTRY}/${IMAGE_NAME_LC}:${{ github.sha }} .
+          docker build -t ${REGISTRY}/${IMAGE_NAME_LC}:${{ github.sha }} -f services/gtfs/Dockerfile services/gtfs
 
       - name: Login to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${REGISTRY} -u ${{ github.actor }} --password-stdin
@@ -32,22 +35,36 @@ jobs:
       - name: Push image
         run: docker push ${REGISTRY}/${IMAGE_NAME_LC}:${{ github.sha }}
 
-      - name: Update GitOps repo
+      - name: Update in-repo GitOps manifests
         run: |
-          git clone https://x-access-token:${{ secrets.GITOPS_TOKEN }}@github.com/TUES-2026-PBL-11-klas/CS-CGM-DEVOPS.git
-
-          cd CS-CGM-DEVOPS/services/nginx
-
-          sed -i "s|image: .*|image: ${REGISTRY}/${IMAGE_NAME_LC}:${{ github.sha }}|" deployment.yaml
+          sed -i "s|image: .*|image: ${REGISTRY}/${IMAGE_NAME_LC}:${{ github.sha }}|" gitops/services/gtfs/deployment.yaml
 
           git config user.name "ci"
           git config user.email "ci@bot.com"
 
-          git add deployment.yaml
+          git add gitops/services/gtfs/deployment.yaml
 
           if git diff --cached --quiet; then
             echo "No manifest changes to commit"
           else
-            git commit -m "Update image"
+            git commit -m "chore(gitops): update gtfs image to ${{ github.sha }}"
             git push
           fi
+
+      - name: Notify Discord
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "DISCORD_WEBHOOK_URL is not set; skipping notification"
+            exit 0
+          fi
+
+          STATUS="${{ job.status }}"
+          BRANCH="${{ github.ref_name }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          curl -sS -H "Content-Type: application/json" \
+            -d "{\"content\":\"[GTFS CD] status: ${STATUS} | branch: ${BRANCH} | image: ${REGISTRY}/${IMAGE_NAME_LC}:${{ github.sha }} | ${RUN_URL}\"}" \
+            "$DISCORD_WEBHOOK_URL"

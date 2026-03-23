@@ -1,0 +1,53 @@
+name: Infra CI (Terraform)
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - terraform/**
+      - .github/workflows/infra.yaml
+  pull_request:
+    branches: ["main"]
+    paths:
+      - terraform/**
+      - .github/workflows/infra.yaml
+  workflow_dispatch:
+
+jobs:
+  terraform-validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init -backend=false
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Notify Discord
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "DISCORD_WEBHOOK_URL is not set; skipping notification"
+            exit 0
+          fi
+
+          STATUS="${{ job.status }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          curl -sS -H "Content-Type: application/json" \
+            -d "{\"content\":\"[Infra CI] status: ${STATUS} | ${RUN_URL}\"}" \
+            "$DISCORD_WEBHOOK_URL"
