@@ -81,6 +81,9 @@ resource "helm_release" "addons" {
   chart            = each.value.chart
   version          = each.value.version
   create_namespace = true
+  timeout          = 600
+  wait             = true
+  wait_for_jobs    = true
 
   values = [
     each.key == "kube-prometheus-stack"
@@ -89,4 +92,8 @@ resource "helm_release" "addons" {
   ]
 
   depends_on = [kubernetes_namespace.namespaces]
+
+  lifecycle {
+    ignore_changes = [values]
+  }
 }

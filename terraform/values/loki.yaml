@@ -1,13 +1,32 @@
 loki:
+  auth_enabled: false
   commonConfig:
     replication_factor: 1
+  storage:
+    bucketNames:
+      chunks: loki-chunks
+      ruler: loki-ruler
+    type: filesystem
+  schema_config:
+    configs:
+      - from: 2020-10-24
+        store: boltdb-shipper
+        object_store: filesystem
+        schema: v11
+        index:
+          prefix: index_
+          period: 24h
 
 singleBinary:
   replicas: 1
 
 monitoring:
   selfMonitoring:
-    enabled: true
+    enabled: false
 
 test:
   enabled: false
+
+persistence:
+  enabled: true
+  size: 2Gi
