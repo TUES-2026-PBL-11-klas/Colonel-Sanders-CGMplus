@@ -2,7 +2,7 @@ name: GTFS CI
 
 on:
   push:
-    branches: ["svc/gtfs", "main"]
+    branches: ["svc/gtfs", "main", "feature/DevOpsTest"]
     paths:
       - services/gtfs/**
       - .github/workflows/gtfs.yaml

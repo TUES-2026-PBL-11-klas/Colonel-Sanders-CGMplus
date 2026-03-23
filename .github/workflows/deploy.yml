@@ -2,7 +2,7 @@ name: Build and Deploy GTFS (GitOps)
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/DevOpsTest]
     paths-ignore:
       - gitops/**
   workflow_dispatch:
