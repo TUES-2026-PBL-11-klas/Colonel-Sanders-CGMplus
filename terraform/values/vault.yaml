@@ -1,0 +1,13 @@
+server:
+  dev:
+    enabled: true
+  standalone:
+    enabled: false
+  ha:
+    enabled: false
+
+injector:
+  enabled: true
+
+ui:
+  enabled: true

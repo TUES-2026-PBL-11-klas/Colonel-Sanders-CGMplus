@@ -1,0 +1,13 @@
+loki:
+  commonConfig:
+    replication_factor: 1
+
+singleBinary:
+  replicas: 1
+
+monitoring:
+  selfMonitoring:
+    enabled: true
+
+test:
+  enabled: false

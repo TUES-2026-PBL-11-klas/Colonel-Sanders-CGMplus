@@ -1,0 +1,6 @@
+server:
+  insecure: true
+
+configs:
+  params:
+    server.insecure: true

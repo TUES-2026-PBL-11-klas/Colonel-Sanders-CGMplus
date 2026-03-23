@@ -1,0 +1,28 @@
+grafana:
+  enabled: true
+  adminPassword: admin
+
+prometheus:
+  prometheusSpec:
+    retention: 7d
+
+alertmanager:
+  enabled: true
+  config:
+    global: {}
+    route:
+      receiver: %{ if discord_webhook_url != "" }discord%{ else }default%{ endif }
+      group_by:
+        - alertname
+        - namespace
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 2h
+    receivers:
+      - name: default
+%{ if discord_webhook_url != "" ~}
+      - name: discord
+        webhook_configs:
+          - url: "${discord_webhook_url}"
+            send_resolved: true
+%{ endif ~}
