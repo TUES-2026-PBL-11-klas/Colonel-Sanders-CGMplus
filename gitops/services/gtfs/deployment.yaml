@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gtfs
+  namespace: gtfs
+  labels:
+    app: gtfs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gtfs
+  template:
+    metadata:
+      labels:
+        app: gtfs
+    spec:
+      containers:
+        - name: gtfs
+          image: ghcr.io/tues-2026-pbl-11-klas/gtfs:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+          envFrom:
+            - secretRef:
+                name: gtfs-app-secrets
+          readinessProbe:
+            httpGet:
+              path: /health/
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health/
+              port: 5000
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
