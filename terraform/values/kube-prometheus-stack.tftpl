@@ -2,8 +2,7 @@ grafana:
   enabled: true
   adminPassword: admin
   persistence:
-    enabled: true
-    size: 1Gi
+    enabled: false
   datasources:
     datasources.yaml:
       apiVersion: 1
@@ -20,13 +19,6 @@ prometheus:
   enabled: true
   prometheusSpec:
     retention: 3d
-    storageSpec:
-      volumeClaimTemplate:
-        spec:
-          accessModes: ["ReadWriteOnce"]
-          resources:
-            requests:
-              storage: 2Gi
     resources:
       requests:
         cpu: 100m
@@ -37,14 +29,6 @@ prometheus:
 
 alertmanager:
   enabled: true
-  alertmanagerSpec:
-    storage:
-      volumeClaimTemplate:
-        spec:
-          accessModes: ["ReadWriteOnce"]
-          resources:
-            requests:
-              storage: 1Gi
   config:
     global: {}
     route:

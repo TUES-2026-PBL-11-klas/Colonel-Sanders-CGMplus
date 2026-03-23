@@ -83,7 +83,7 @@ resource "helm_release" "addons" {
   create_namespace = true
   timeout          = 1200
   wait             = true
-  wait_for_jobs    = true
+  wait_for_jobs    = false
 
   values = [
     each.key == "kube-prometheus-stack"

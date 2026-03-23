@@ -2,23 +2,9 @@ deploymentMode: SingleBinary
 
 loki:
   auth_enabled: false
+  useTestSchema: true
   commonConfig:
     replication_factor: 1
-  storage:
-    type: filesystem
-    bucketNames:
-      chunks: loki-chunks
-      ruler: loki-ruler
-      admin: loki-admin
-  schema_config:
-    configs:
-      - from: 2020-10-24
-        store: boltdb-shipper
-        object_store: filesystem
-        schema: v11
-        index:
-          prefix: index_
-          period: 24h
 
 singleBinary:
   replicas: 1
@@ -40,5 +26,4 @@ test:
   enabled: false
 
 persistence:
-  enabled: true
-  size: 2Gi
+  enabled: false
