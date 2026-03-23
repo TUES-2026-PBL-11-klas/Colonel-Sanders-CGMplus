@@ -3,18 +3,30 @@ import {
   Animated,
   Image,
   PanResponder,
+  Platform,
   Pressable,
   View,
   type GestureResponderEvent,
   type PanResponderGestureState,
 } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { HCESession, NFCTagType4NDEFContentType, NFCTagType4 } from 'react-native-hce';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { membershipCardMock } from '@/constants/membership-card-mock';
+
+// Only import HCE on native platforms
+let HCESession: any;
+let NFCTagType4: any;
+let NFCTagType4NDEFContentType: any;
+
+if (Platform.OS !== 'web') {
+  const hceModule = require('react-native-hce');
+  HCESession = hceModule.HCESession;
+  NFCTagType4 = hceModule.NFCTagType4;
+  NFCTagType4NDEFContentType = hceModule.NFCTagType4NDEFContentType;
+}
 import {
   getNfcBarStyle,
   getOverlayStyle,

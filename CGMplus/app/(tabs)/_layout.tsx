@@ -1,8 +1,6 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-
 import { HapticTab } from '@/components/haptic-tab';
 import { HomeIcon, MapIcon, WalletIcon, ProfileIcon, TicketIcon } from '@/components/ui/tab-icons';
 import { Colors } from '@/constants/theme';
