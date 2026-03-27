@@ -1,12 +1,12 @@
 from sqlalchemy import String, Boolean, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from .base import BaseModel
+from src.models.base import BaseModel
 import uuid
 
 
 class Role(BaseModel):
-    __tablename__ = 'user_roles'
+    __tablename__ = 'roles'
 
     id: Mapped[int] = mapped_column(primary_key=True)
 

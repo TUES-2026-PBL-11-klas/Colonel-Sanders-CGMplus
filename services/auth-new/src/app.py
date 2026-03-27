@@ -1,7 +1,8 @@
 from flask import Flask
-from .extensions import api, db
-from .routes.auth import blp as AuthBlueprint
-from .routes.root import blp as RootBlueprint
+from flask_migrate import Migrate
+from src.extensions import api, db
+from src.routes.auth import blp as AuthBlueprint
+from src.routes.root import blp as RootBlueprint
 
 
 def create_app():
@@ -15,12 +16,19 @@ def create_app():
         "OPENAPI_URL_PREFIX": "/docs",
         "OPENAPI_SWAGGER_UI_PATH": "/",
         "OPENAPI_SWAGGER_UI_URL":
-        "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
-
+        "https://cdn.jsdelivr.net/npm/swagger-ui-dist/",
+        "SQLALCHEMY_TRACK_MODIFICATIONS": "False",
+        "SQLALCHEMY_DATABASE_URI":
+        #"postgresql+psycopg://postgres:password@db:5432/auth_db"
+        "postgresql://postgres:password@localhost:5432/auth_db"
     })
 
     api.init_app(app)
-    # db.init_app(app)
+    db.init_app(app)
+    migrate = Migrate(app, db)
+    migrate.init_app(app, db)
+
+    from src import models
 
     api.register_blueprint(AuthBlueprint, url_prefix="/auth")
     api.register_blueprint(RootBlueprint)
