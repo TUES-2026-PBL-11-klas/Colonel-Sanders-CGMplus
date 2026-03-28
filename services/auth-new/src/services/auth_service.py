@@ -1,5 +1,7 @@
+import secrets
 import uuid
 
+import jwt
 from flask_jwt_extended import create_access_token, create_refresh_token
 
 from src.repositories.user_repository import UserRepository
@@ -48,21 +50,60 @@ class AuthService:
 
         return self._issue_tokens(user)
 
-    def refresh(self, identity: str) -> dict:
-        uid = uuid.UUID(identity)
-        refresh_plain = create_refresh_token(identity=identity)
-        self.refresh_token_repo.persist_issued(uid, refresh_plain)
+    def refresh(self, incoming_refresh_token: str, jwt_secret: str) -> dict:
+        try:
+            payload = jwt.decode(
+                incoming_refresh_token,
+                jwt_secret,
+                algorithms=["HS256"],
+            )
+        except jwt.PyJWTError:
+            raise InvalidCredentialsError("Invalid or expired refresh token.")
+
+        try:
+            identity_str = str(payload["sub"])
+        except KeyError:
+            raise InvalidCredentialsError("Invalid or expired refresh token.")
+        try:
+            uid = uuid.UUID(identity_str)
+        except ValueError:
+            raise InvalidCredentialsError("Invalid or expired refresh token.")
+
+        user = self.user_repo.get_by_id(uid)
+        if user is None or not user.is_active or user.refresh_jwt is None:
+            raise InvalidCredentialsError("Invalid or expired refresh token.")
+        if len(user.refresh_jwt) != len(incoming_refresh_token):
+            raise InvalidCredentialsError("Invalid or expired refresh token.")
+        if not secrets.compare_digest(
+            user.refresh_jwt,
+            incoming_refresh_token,
+        ):
+            raise InvalidCredentialsError("Invalid or expired refresh token.")
+
+        access_plain = create_access_token(identity=identity_str)
+        refresh_plain = create_refresh_token(identity=identity_str)
+        self.user_repo.update(
+            user,
+            access_jwt=access_plain,
+            refresh_jwt=refresh_plain,
+        )
         return {
-            "access_token": create_access_token(identity=identity),
+            "access_token": access_plain,
             "refresh_token": refresh_plain,
             "token_type": "bearer",
         }
 
     def _issue_tokens(self, user: User) -> dict:
         identity = str(user.id)
+        access_plain = create_access_token(identity=identity)
         refresh_plain = create_refresh_token(identity=identity)
+        self.user_repo.update(
+            user,
+            access_jwt=access_plain,
+            refresh_jwt=refresh_plain,
+        )
         return {
-            "access_token": create_access_token(identity=identity),
+            "access_token": access_plain,
             "refresh_token": refresh_plain,
             "token_type": "bearer",
         }

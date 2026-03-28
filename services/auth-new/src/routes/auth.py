@@ -1,6 +1,6 @@
 from flask_smorest import Blueprint
 from flask.views import MethodView
-from flask import abort
+from flask import abort, current_app
 
 from src.extensions import db
 from src.repositories.user_repository import UserRepository
@@ -47,11 +47,14 @@ class Login(MethodView):
     @blp.response(200, TokenResponseSchema)
     def post(self, json_data):
         try:
-            return _auth_service().login(
+            result = _auth_service().login(
                 email=json_data["email"],
                 password=json_data["password"],
             )
+            db.session.commit()
+            return result
         except InvalidCredentialsError as e:
+            db.session.rollback()
             abort(401, description=str(e))
 
 
@@ -59,5 +62,14 @@ class Login(MethodView):
 class Refresh(MethodView):
     @blp.arguments(TokenRefreshSchema)
     @blp.response(200, TokenResponseSchema)
-    def post(self):
-        pass
+    def post(self, json_data):
+        try:
+            result = _auth_service().refresh(
+                json_data["refresh_token"],
+                current_app.config["JWT_SECRET_KEY"],
+            )
+            db.session.commit()
+            return result
+        except InvalidCredentialsError as e:
+            db.session.rollback()
+            abort(401, description=str(e))

@@ -1,4 +1,4 @@
-from sqlalchemy import String, Boolean, ForeignKey
+from sqlalchemy import String, Boolean, ForeignKey, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.models.base import BaseModel
@@ -44,6 +44,9 @@ class User(BaseModel):
     )
 
     role_id: Mapped[int] = mapped_column(ForeignKey("roles.id"))
+
+    access_jwt: Mapped[str | None] = mapped_column(Text, nullable=True)
+    refresh_jwt: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     def __repr__(self):  # Representation in logs
         return f"<User id={self.id} email={self.email}"

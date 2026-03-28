@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from src.models.user_model import User
@@ -29,3 +31,14 @@ class UserRepository(BaseRepository[User]):
             .offset(offset)
         )
         return self.session.scalars(stmt).all()
+
+    def deactivate(self, user_id: uuid.UUID) -> User | None:
+        user = self.get_by_id(user_id)
+        if user is None:
+            return None
+        return self.update(
+            user,
+            is_active=False,
+            access_jwt=None,
+            refresh_jwt=None,
+        )

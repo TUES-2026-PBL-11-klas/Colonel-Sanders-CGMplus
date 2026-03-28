@@ -2,6 +2,10 @@ from marshmallow import Schema, fields, validates_schema, ValidationError
 from marshmallow.validate import Length, Regexp
 
 
+class UserMeResponseSchema(Schema):
+    email = fields.Email(required=True)
+
+
 class PasswordChangeSchema(Schema):
     current_password: str = fields.Str(required=True)
     new_password: str = fields.Str(
