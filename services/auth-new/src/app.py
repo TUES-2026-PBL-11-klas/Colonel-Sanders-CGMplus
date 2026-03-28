@@ -1,12 +1,19 @@
 import os
 from flask import Flask
 from flask_migrate import Migrate
-from src.extensions import api, db
+from src.extensions import api, db, migrate, jwt
 from src.routes.auth import blp as AuthBlueprint
 from src.routes.root import blp as RootBlueprint
 from dotenv import load_dotenv
 
 load_dotenv()
+
+
+def _jwt_secret_key() -> str:
+    key = os.getenv("JWT_SECRET") or os.getenv("SECRET_KEY")
+    if key:
+        return key
+    return "dev-only-insecure-jwt-key-set-JWT_SECRET-or-SECRET_KEY"
 
 
 def create_app():
@@ -22,13 +29,14 @@ def create_app():
         "OPENAPI_SWAGGER_UI_URL":
         "https://cdn.jsdelivr.net/npm/swagger-ui-dist/",
         "SQLALCHEMY_TRACK_MODIFICATIONS": os.getenv("SQLALCHEMY_TRACK_MODIFICATIONS"),
-        "SQLALCHEMY_DATABASE_URI": os.getenv("SQLALCHEMY_DATABASE_URI")
+        "SQLALCHEMY_DATABASE_URI": os.getenv("SQLALCHEMY_DATABASE_URI"),
+        "JWT_SECRET_KEY": _jwt_secret_key(),
     })
 
     api.init_app(app)
     db.init_app(app)
-    migrate = Migrate(app, db)
     migrate.init_app(app, db)
+    jwt.init_app(app)
 
     from src import models
 

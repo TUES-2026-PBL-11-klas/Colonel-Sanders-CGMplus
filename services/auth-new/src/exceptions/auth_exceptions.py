@@ -4,3 +4,7 @@ class AuthServiceError(Exception):
 
 class ResourceConflictError(AuthServiceError):
     pass
+
+
+class InvalidCredentialsError(AuthServiceError):
+    pass
