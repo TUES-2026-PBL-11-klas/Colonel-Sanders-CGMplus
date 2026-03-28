@@ -12,7 +12,12 @@ class RoleRepository(BaseRepository[Role]):
         stmt = select(Role).where(Role.role == role_name)
         return self.session.scalar(stmt)
 
-    def get_users(self, role_id: int, limit: int = 100, offset: int = 0) -> list[User]:
+    def get_users(
+        self,
+        role_id: int,
+        limit: int = 100,
+        offset: int = 0
+    ) -> list[User]:
         stmt = (
             select(User)
             .where(User.role_id == role_id)
