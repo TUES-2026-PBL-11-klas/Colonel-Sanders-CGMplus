@@ -4,6 +4,7 @@ from flask_migrate import Migrate
 from src.extensions import api, db, migrate, jwt
 from src.routes.auth import blp as AuthBlueprint
 from src.routes.root import blp as RootBlueprint
+from src.routes.user import blp as UserBlueprint
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -32,6 +33,18 @@ def create_app():
         "SQLALCHEMY_DATABASE_URI": os.getenv("SQLALCHEMY_DATABASE_URI"),
         "JWT_SECRET_KEY": _jwt_secret_key(),
     })
+    app.config["API_SPEC_OPTIONS"] = {
+        "components": {
+            "securitySchemes": {
+                "BearerAuth": {
+                    "type": "http",
+                    "scheme": "bearer",
+                    "bearerFormat": "JWT",
+                }
+            }
+        },
+    #"security": [{"BearerAuth": []}],  # applies globally to all endpoints
+    }
 
     api.init_app(app)
     db.init_app(app)
@@ -42,6 +55,7 @@ def create_app():
 
     api.register_blueprint(AuthBlueprint, url_prefix="/auth")
     api.register_blueprint(RootBlueprint)
+    api.register_blueprint(UserBlueprint)
 
     return app
 

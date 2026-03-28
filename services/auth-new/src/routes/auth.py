@@ -10,9 +10,11 @@ from src.exceptions.auth_exceptions import (
     ResourceConflictError,
     InvalidCredentialsError,
 )
-from src.schemas.token_schema import TokenResponseSchema
-from src.schemas.login_schema import LoginSchema
-from src.schemas.register_schema import RegisterSchema
+from src.schemas.auth_schema import (LoginSchema,
+    RegisterSchema,
+    TokenRefreshSchema,
+    TokenResponseSchema
+)
 
 blp = Blueprint("auth", "auth", url_prefix="/auth")
 
@@ -51,3 +53,11 @@ class Login(MethodView):
             )
         except InvalidCredentialsError as e:
             abort(401, description=str(e))
+
+
+@blp.route("/refresh")
+class Refresh(MethodView):
+    @blp.arguments(TokenRefreshSchema)
+    @blp.response(200, TokenResponseSchema)
+    def post(self):
+        pass
