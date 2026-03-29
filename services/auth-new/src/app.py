@@ -1,57 +1,33 @@
-import os
 from flask import Flask
 from flask_migrate import Migrate
+
+from src.config import apply_runtime_config, config_by_name, get_config_name
 from src.extensions import api, db, migrate, jwt
 from src.routes.auth import blp as AuthBlueprint
 from src.routes.root import blp as RootBlueprint
 from src.routes.user import blp as UserBlueprint
-from dotenv import load_dotenv
 
-load_dotenv()
-
-
-def _jwt_secret_key() -> str:
-    key = os.getenv("JWT_SECRET") or os.getenv("SECRET_KEY")
-    if key:
-        return key
-    return "dev-only-insecure-jwt-key-set-JWT_SECRET-or-SECRET_KEY"
+# load_dotenv()
 
 
-def create_app():
+def create_app(config_name: str | None = None):
     app = Flask(__name__)
 
-    app.config.update({
-        "API_TITLE": "User API",
-        "API_VERSION": "v1",
-        "OPENAPI_VERSION": "3.0.3",
-        "OPENAPI_JSON_PATH": "openapi.json",
-        "OPENAPI_URL_PREFIX": "/docs",
-        "OPENAPI_SWAGGER_UI_PATH": "/",
-        "OPENAPI_SWAGGER_UI_URL":
-        "https://cdn.jsdelivr.net/npm/swagger-ui-dist/",
-        "SQLALCHEMY_TRACK_MODIFICATIONS": os.getenv("SQLALCHEMY_TRACK_MODIFICATIONS"),
-        "SQLALCHEMY_DATABASE_URI": os.getenv("SQLALCHEMY_DATABASE_URI"),
-        "JWT_SECRET_KEY": _jwt_secret_key(),
-    })
-    app.config["API_SPEC_OPTIONS"] = {
-        "components": {
-            "securitySchemes": {
-                "BearerAuth": {
-                    "type": "http",
-                    "scheme": "bearer",
-                    "bearerFormat": "JWT",
-                }
-            }
-        },
-    #"security": [{"BearerAuth": []}],  # applies globally to all endpoints
-    }
+    name = config_name or get_config_name()
+    app.config.from_object(config_by_name[name])
+    apply_runtime_config(app, name)
+
+    if name == "production" and not app.config.get("JWT_SECRET_KEY"):
+        raise RuntimeError(
+            "JWT_SECRET_KEY is required in production. Set JWT_SECRET or SECRET_KEY."
+        )
 
     api.init_app(app)
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
 
-    from src import models
+    from src import models  # noqa: F401
 
     api.register_blueprint(AuthBlueprint, url_prefix="/auth")
     api.register_blueprint(RootBlueprint)
@@ -62,3 +38,4 @@ def create_app():
 
 if __name__ == "__main__":
     app = create_app()
+    app.run(debug=True)
