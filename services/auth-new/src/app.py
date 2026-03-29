@@ -34,8 +34,3 @@ def create_app(config_name: str | None = None):
     api.register_blueprint(UserBlueprint)
 
     return app
-
-
-if __name__ == "__main__":
-    app = create_app()
-    app.run(debug=True)
