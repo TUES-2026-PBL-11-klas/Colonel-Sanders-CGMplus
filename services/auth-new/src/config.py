@@ -14,19 +14,8 @@ def get_config_name() -> str:
         return "production"
     return "development"
 
-
-def _dev_jwt_secret() -> str:
-    return (
-        os.getenv("JWT_SECRET")
-        or os.getenv("SECRET_KEY")
-    )
-
-
-def _prod_jwt_secret() -> str | None:
-    return os.getenv("JWT_SECRET") or os.getenv("SECRET_KEY")
-
-
 def apply_runtime_config(app: Flask, name: str) -> None:
+    app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET")
     if name == "development":
         app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("SQLALCHEMY_DATABASE_URI")
         app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = os.getenv(
@@ -55,7 +44,7 @@ class Config:
         "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
     )
 
-    JWT_SECRET_KEY = os.getenv("JWT_SECRET")
+    # JWT_SECRET_KEY = os.getenv("JWT_SECRET")
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
