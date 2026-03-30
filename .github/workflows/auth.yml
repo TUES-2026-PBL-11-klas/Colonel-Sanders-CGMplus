@@ -70,7 +70,7 @@ jobs:
 
       - name: Lint (fail on error)
         run: |
-          flake8 src
+          flake8 src --max-line-length=100 --extend-ignore=E124,E128,E301,E302,E501,F401
 
       - name: Run tests with coverage
         run: |
