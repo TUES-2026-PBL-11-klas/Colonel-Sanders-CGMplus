@@ -7,6 +7,9 @@ const LEAFLET_HTML = `
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- FIX 1: correct attribute name is referrerpolicy (no hyphen),
+       and origin-when-cross-origin lets OSM tile servers receive the
+       origin so they can serve tiles, while keeping full URLs private. -->
   <meta name="referrerpolicy" content="origin-when-cross-origin" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -20,12 +23,26 @@ const LEAFLET_HTML = `
   <script>
     const map = L.map('map').setView([42.6977, 23.3219], 13);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      // FIX 2: pass the policy here too so XHR/fetch for tiles obeys it
+    // CartoDB Positron: clean basemap, no POI icons, no API key needed.
+    // Split into two layers so road/place labels remain visible above markers.
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ' +
+        '&copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains: 'abcd',
       referrerPolicy: 'origin-when-cross-origin',
+      maxZoom: 20,
     }).addTo(map);
 
+    // Labels-only layer rendered in shadowPane so it sits above tiles but below markers.
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
+      subdomains: 'abcd',
+      referrerPolicy: 'origin-when-cross-origin',
+      maxZoom: 20,
+      pane: 'shadowPane',
+    }).addTo(map);
+
+    // ── Icons per stop/station type ────────────────────────────────────────
     function makeIcon(emoji) {
       return L.divIcon({
         className: '',
@@ -42,7 +59,20 @@ const LEAFLET_HTML = `
       subway:  makeIcon('🚇'),
     };
 
+    // ── Load static stops from Overpass API ───────────────────────────────
+    // FIX 3: queries only the four allowed node types so unrelated stops
+    // (ferry, aerialway, etc.) are never fetched or rendered.
+    const MIN_ZOOM_FOR_ICONS = 15;
+    let stopsMarkerGroup = L.featureGroup();
+    stopsMarkerGroup.addTo(map);
+
     async function loadStops() {
+      // Only load and show icons when zoomed in enough
+      if (map.getZoom() < MIN_ZOOM_FOR_ICONS) {
+        stopsMarkerGroup.clearLayers();
+        return;
+      }
+
       const query = \`
         [out:json][timeout:25];
         (
@@ -60,6 +90,7 @@ const LEAFLET_HTML = `
           { method: 'POST', body: 'data=' + encodeURIComponent(query) }
         );
         const data = await res.json();
+        stopsMarkerGroup.clearLayers();
         data.elements.forEach(addStopMarker);
       } catch (e) {
         console.error('Overpass fetch failed', e);
@@ -95,9 +126,11 @@ const LEAFLET_HTML = `
         .addTo(map);
     }
 
+    // Load stops once the map is ready, and again after each pan/zoom.
     map.whenReady(loadStops);
     map.on('moveend', loadStops);
 
+    // ── Live vehicle feed (unchanged logic, same type filter) ─────────────
     const vehicleMarkers = {};
 
     function handleVehicles(vehicles) {
