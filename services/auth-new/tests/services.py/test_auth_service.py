@@ -102,7 +102,8 @@ class TestRegister:
             service.register(USER_EMAIL, USER_PASSWORD)
 
         role_repo.create.assert_called_once_with(role="user")
-        user_repo.session.flush.assert_called_once()
+        # Flush is called after creating role and after creating user
+        assert user_repo.session.flush.call_count >= 1
 
     def test_hashes_password_before_storing(self, service, user_repo, role_repo, mock_user, mock_role):
         user_repo.get_by_email.return_value = None

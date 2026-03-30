@@ -142,48 +142,52 @@ class TestCreateAppExtensionInit:
 class TestCreateAppProductionGuard:
     def test_raises_when_jwt_secret_missing_in_production(self):
         """RuntimeError must be raised if JWT_SECRET_KEY is absent in production."""
-        fake_config = MagicMock()
+        from src.app import create_app
 
         with patch("src.app.get_config_name", return_value="production"), \
-             patch("src.app.config_by_name", {"production": fake_config}), \
+             patch("src.app.config_by_name", {"production": MagicMock()}), \
              patch("src.app.apply_runtime_config"):
-            from src.app import create_app
 
-            # Simulate app.config.get("JWT_SECRET_KEY") returning None/falsy.
-            with patch("flask.Flask.config", new_callable=MagicMock) as mock_cfg:
-                mock_cfg.from_object = MagicMock()
-                mock_cfg.get = MagicMock(return_value=None)
+            # Patch Flask where it's imported in src.app
+            with patch("src.app.Flask") as MockFlask:
+                mock_app = MagicMock()
+                mock_app.config = MagicMock()
+                mock_app.config.get = MagicMock(return_value=None)
+                MockFlask.return_value = mock_app
 
                 with pytest.raises(RuntimeError, match="JWT_SECRET_KEY"):
                     create_app("production")
 
     def test_no_error_when_jwt_secret_present_in_production(self):
         """No RuntimeError when JWT_SECRET_KEY is set in production."""
-        fake_config = MagicMock()
+        from src.app import create_app
 
         with patch("src.app.get_config_name", return_value="production"), \
-             patch("src.app.config_by_name", {"production": fake_config}), \
+             patch("src.app.config_by_name", {"production": MagicMock()}), \
              patch("src.app.apply_runtime_config"):
-            from src.app import create_app
 
-            with patch("flask.Flask.config", new_callable=MagicMock) as mock_cfg:
-                mock_cfg.from_object = MagicMock()
-                mock_cfg.get = MagicMock(return_value="super-secret")
+            with patch("src.app.Flask") as MockFlask:
+                mock_app = MagicMock()
+                mock_app.config = MagicMock()
+                mock_app.config.get = MagicMock(return_value="super-secret")
+                MockFlask.return_value = mock_app
 
-                # Should not raise.
                 app = create_app("production")
                 assert app is not None
 
     def test_no_jwt_check_outside_production(self):
         """JWT_SECRET_KEY check must be skipped for non-production configs."""
+        from src.app import create_app
+
         with patch("src.app.get_config_name", return_value="testing"), \
              patch("src.app.config_by_name", {"testing": MagicMock()}), \
              patch("src.app.apply_runtime_config"):
-            from src.app import create_app
 
-            with patch("flask.Flask.config", new_callable=MagicMock) as mock_cfg:
-                mock_cfg.from_object = MagicMock()
-                mock_cfg.get = MagicMock(return_value=None)  # No key — still fine.
+            with patch("src.app.Flask") as MockFlask:
+                mock_app = MagicMock()
+                mock_app.config = MagicMock()
+                mock_app.config.get = MagicMock(return_value=None)
+                MockFlask.return_value = mock_app
 
                 app = create_app("testing")
                 assert app is not None
