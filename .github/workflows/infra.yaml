@@ -2,12 +2,12 @@ name: Infra CI (Terraform)
 
 on:
   push:
-    branches: ["main", "feature/DevOpsTest"]
+    branches: ["main", "development", "feature/DevOpsTest"]
     paths:
       - terraform/**
       - .github/workflows/infra.yaml
   pull_request:
-    branches: ["main"]
+    branches: ["main", "development"]
     paths:
       - terraform/**
       - .github/workflows/infra.yaml

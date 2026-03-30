@@ -1,10 +1,12 @@
-name: Build and Deploy GTFS (GitOps)
+name: Build Service Images
 
 on:
   push:
-    branches: [main, feature/DevOpsTest]
-    paths-ignore:
-      - gitops/**
+    branches: [main, development, feature/DevOpsTest]
+    paths:
+      - services/gtfs/**
+      - services/auth-new/**
+      - .github/workflows/deploy.yml
   workflow_dispatch:
 
 permissions:
@@ -12,44 +14,42 @@ permissions:
   packages: write
 
 jobs:
-  build-and-update-gitops:
+  build-and-push-images:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service_name: gtfs
+            dockerfile: services/gtfs/Dockerfile
+            context: services/gtfs
+            image_name: gtfs
+          - service_name: auth-new
+            dockerfile: services/auth-new/Dockerfile
+            context: services/auth-new
+            image_name: auth-new
+
     env:
       REGISTRY: ghcr.io
-      IMAGE_NAME: ${{ github.repository_owner }}/gtfs
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set lowercase image name
-        run: echo "IMAGE_NAME_LC=$(echo ${IMAGE_NAME} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+        run: |
+          IMAGE_NAME="${{ github.repository_owner }}/${{ matrix.image_name }}"
+          echo "IMAGE_NAME_LC=$(echo ${IMAGE_NAME} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
       - name: Build Docker image
         run: |
-          docker build -t ${REGISTRY}/${IMAGE_NAME_LC}:${{ github.sha }} -f services/gtfs/Dockerfile services/gtfs
+          docker build -t ${REGISTRY}/${IMAGE_NAME_LC}:${{ github.sha }} -f ${{ matrix.dockerfile }} ${{ matrix.context }}
 
       - name: Login to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${REGISTRY} -u ${{ github.actor }} --password-stdin
 
       - name: Push image
         run: docker push ${REGISTRY}/${IMAGE_NAME_LC}:${{ github.sha }}
-
-      - name: Update in-repo GitOps manifests
-        run: |
-          sed -i "s|image: .*|image: ${REGISTRY}/${IMAGE_NAME_LC}:${{ github.sha }}|" gitops/services/gtfs/deployment.yaml
-
-          git config user.name "ci"
-          git config user.email "ci@bot.com"
-
-          git add gitops/services/gtfs/deployment.yaml
-
-          if git diff --cached --quiet; then
-            echo "No manifest changes to commit"
-          else
-            git commit -m "chore(gitops): update gtfs image to ${{ github.sha }}"
-            git push
-          fi
 
       - name: Notify Discord
         if: always()
@@ -66,5 +66,5 @@ jobs:
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
           curl -sS -H "Content-Type: application/json" \
-            -d "{\"content\":\"[GTFS CD] status: ${STATUS} | branch: ${BRANCH} | image: ${REGISTRY}/${IMAGE_NAME_LC}:${{ github.sha }} | ${RUN_URL}\"}" \
+            -d "{\"content\":\"[Service Build] status: ${STATUS} | branch: ${BRANCH} | service: ${{ matrix.service_name }} | image: ${REGISTRY}/${IMAGE_NAME_LC}:${{ github.sha }} | ${RUN_URL}\"}" \
             "$DISCORD_WEBHOOK_URL"

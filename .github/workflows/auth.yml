@@ -1,16 +1,16 @@
-name: GTFS CI
+name: AUTH CI
 
 on:
   push:
     branches: ["main", "development", "svc/**", "feature/DevOpsTest"]
     paths:
-      - services/gtfs/**
-      - .github/workflows/gtfs.yaml
+      - services/auth-new/**
+      - .github/workflows/auth.yml
   pull_request:
     branches: ["main", "development"]
     paths:
-      - services/gtfs/**
-      - .github/workflows/gtfs.yaml
+      - services/auth-new/**
+      - .github/workflows/auth.yml
   workflow_dispatch:
 
 jobs:
@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: services/gtfs
+        working-directory: services/auth-new
     services:
       postgres:
         image: postgres:17
@@ -35,12 +35,15 @@ jobs:
           --health-retries=5
 
     env:
-      PYTHON_VERSION: "3.12"
+      PYTHON_VERSION: "3.13"
       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-      DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/${{ secrets.POSTGRES_DB }}
+      SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/${{ secrets.POSTGRES_DB }}
       POSTGRES_PORT: 5432
+      FLASK_ENV: testing
+      JWT_SECRET: test-jwt-secret
+      SQLALCHEMY_TRACK_MODIFICATIONS: "False"
 
     steps:
       - name: Checkout code
@@ -55,7 +58,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt', 'requirements-dev.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
@@ -63,7 +66,6 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-          pip install -r requirements-dev.txt
 
       - name: Lint (fail on error)
         run: |
@@ -77,14 +79,14 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: coverage-report
+          name: auth-coverage-report
           path: coverage.xml
 
       - name: Smoke test (app boot)
         run: |
           python run.py &
           for i in {1..10}; do
-            curl -sf http://localhost:5000/health/ && break
+            curl -sf http://localhost:5000/health && break
             echo "Waiting for app... attempt $i"
             sleep 2
           done
@@ -105,5 +107,5 @@ jobs:
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
           curl -sS -H "Content-Type: application/json" \
-            -d "{\"content\":\"[GTFS CI] status: ${STATUS} | branch: ${BRANCH} | actor: ${ACTOR} | ${RUN_URL}\"}" \
+            -d "{\"content\":\"[AUTH CI] status: ${STATUS} | branch: ${BRANCH} | actor: ${ACTOR} | ${RUN_URL}\"}" \
             "$DISCORD_WEBHOOK_URL"

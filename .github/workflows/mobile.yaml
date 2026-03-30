@@ -2,11 +2,9 @@ name: Expo CI
 
 on:
   push:
-    branches:
-      - dev/mobile
+    branches: ["main", "dev/mobile", "development", "feature/DevOpsTest"]
   pull_request:
-    branches:
-      - dev/mobile
+    branches: ["main", "development", "svc/**", "feature/DevOpsTest"]
 
 defaults:
   run:
@@ -50,3 +48,22 @@ jobs:
 
       - name: Export app (Expo Go compatibility check)
         run: npx expo export --platform web
+
+      - name: Notify Discord
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "DISCORD_WEBHOOK_URL is not set; skipping notification"
+            exit 0
+          fi
+
+          STATUS="${{ job.status }}"
+          BRANCH="${{ github.ref_name }}"
+          ACTOR="${{ github.actor }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          curl -sS -H "Content-Type: application/json" \
+            -d "{\"content\":\"[Mobile CI] status: ${STATUS} | branch: ${BRANCH} | actor: ${ACTOR} | ${RUN_URL}\"}" \
+            "$DISCORD_WEBHOOK_URL"
