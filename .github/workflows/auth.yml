@@ -36,6 +36,7 @@ jobs:
 
     env:
       PYTHON_VERSION: "3.13"
+      PYTHONPATH: ${{ github.workspace }}/services/auth-new
       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
