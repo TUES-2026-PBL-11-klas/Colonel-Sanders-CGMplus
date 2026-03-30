@@ -2,7 +2,6 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-
 import { HapticTab } from '@/components/haptic-tab';
 import { HomeIcon, MapIcon, WalletIcon, ProfileIcon, TicketIcon } from '@/components/ui/tab-icons';
 import { Colors } from '@/constants/theme';
@@ -14,8 +13,10 @@ export default function TabLayout() {
 
   return (
     <Tabs
+      backBehavior="initialRoute"
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].primary,
+        tabBarInactiveTintColor: Colors[colorScheme ?? 'light'].onSurfaceVariant,
         headerShown: false,
         sceneStyle: {
           paddingTop: top,
@@ -23,14 +24,24 @@ export default function TabLayout() {
 
         tabBarButton: HapticTab,
         tabBarStyle: {
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
           height: 100 + bottom,
-          backgroundColor: Colors[colorScheme ?? 'light'].background,
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
+          backgroundColor: Colors[colorScheme ?? 'light'].surface,
+          borderTopLeftRadius: 28,
+          borderTopRightRadius: 28,
           borderTopWidth: 0,
           overflow: 'hidden',
           paddingTop: 30,
           paddingBottom: bottom,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 10,
+          elevation: 8,
+          zIndex: 100,
         },
       }}>
       <Tabs.Screen
