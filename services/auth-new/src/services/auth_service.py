@@ -38,6 +38,7 @@ class AuthService:
             hashed_password=password_hash,
             role_id=role.id,
         )
+        self.user_repo.session.flush()
         return self._issue_tokens(user)
 
     def login(self, email: str, password: str) -> dict:
@@ -80,18 +81,7 @@ class AuthService:
         ):
             raise InvalidCredentialsError("Invalid or expired refresh token.")
 
-        access_plain = create_access_token(identity=identity_str)
-        refresh_plain = create_refresh_token(identity=identity_str)
-        self.user_repo.update(
-            user,
-            access_jwt=access_plain,
-            refresh_jwt=refresh_plain,
-        )
-        return {
-            "access_token": access_plain,
-            "refresh_token": refresh_plain,
-            "token_type": "bearer",
-        }
+        return self._issue_tokens(user)
 
     def _issue_tokens(self, user: User) -> dict:
         identity = str(user.id)
