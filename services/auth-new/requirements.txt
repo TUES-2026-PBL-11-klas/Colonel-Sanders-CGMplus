@@ -10,3 +10,4 @@ sqlalchemy==2.0.48
 gunicorn>=21.2
 bcrypt==5.0.0
 psycopg2-binary
+prometheus_flask_exporter

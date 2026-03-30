@@ -2,7 +2,13 @@ from flask import Flask
 from flask_migrate import Migrate
 
 from src.config import apply_runtime_config, config_by_name, get_config_name
-from src.extensions import api, db, migrate, jwt
+from src.extensions import (
+    api,
+    db,
+    migrate,
+    jwt,
+    metrics
+)
 from src.routes.auth import blp as AuthBlueprint
 from src.routes.root import blp as RootBlueprint
 from src.routes.user import blp as UserBlueprint
@@ -21,6 +27,9 @@ def create_app(config_name: str | None = None):
         raise RuntimeError(
             "JWT_SECRET_KEY is required in production. Set JWT_SECRET or SECRET_KEY."
         )
+
+    # Initialize metrics first to bypass flask-smorest validation
+    metrics.init_app(app)
 
     api.init_app(app)
     db.init_app(app)
