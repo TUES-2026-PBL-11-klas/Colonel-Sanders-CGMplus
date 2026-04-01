@@ -3,7 +3,7 @@ kind: Kustomization
 
 resources:
   - ingress/ingress.yaml
-  - services/postgres
+  - database/auth-postgres.yaml
   - services/gtfs
   - services/auth
   - vault
