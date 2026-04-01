@@ -106,6 +106,54 @@ cloudflared tunnel run cgmplus-dev --url http://localhost:8080
 
 Keep host in [gitops/ingress/ingress.yaml](gitops/ingress/ingress.yaml) aligned with your Cloudflare DNS.
 
+### Exposure Policy (Recommended)
+
+Expose only the app ingress externally. Keep Argo CD, Grafana, Prometheus, Loki, Alertmanager, and Vault internal (ClusterIP) and access them only with local port-forward.
+
+External exposure (only ingress controller):
+
+```bash
+kubectl port-forward -n ingress-nginx svc/ingress-nginx-controller 8080:80
+cloudflared tunnel run cgmplus-dev --url http://localhost:8080
+```
+
+Localhost-only admin/observability access:
+
+```bash
+# Argo CD UI
+kubectl port-forward -n argocd svc/argocd-server 8081:443
+# Open https://localhost:8081
+
+# Grafana
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80
+# Open http://localhost:3000
+
+# Prometheus
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090
+# Open http://localhost:9090
+
+# Alertmanager
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-alertmanager 9093:9093
+# Open http://localhost:9093
+
+# Loki API
+kubectl port-forward -n monitoring svc/loki 3100:3100
+# Open http://localhost:3100/ready
+
+# Vault UI
+kubectl port-forward -n vault svc/vault-ui 8200:8200
+# Open http://localhost:8200
+```
+
+Quick verification that only app ingress is exposed:
+
+```bash
+kubectl get ingress -A
+kubectl get svc -A
+```
+
+You should see only your application ingress resource in namespace `gtfs`, while Argo CD and monitoring services remain `ClusterIP`.
+
 ## 7) Deployment Flow
 
 1. Push to `development`.
