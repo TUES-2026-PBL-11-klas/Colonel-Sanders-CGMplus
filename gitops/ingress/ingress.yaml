@@ -9,9 +9,23 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: gtfs-dev.example.com
+    - host: cgmplus-dev.example.com
       http:
         paths:
+          - path: /auth
+            pathType: Prefix
+            backend:
+              service:
+                name: auth-service
+                port:
+                  number: 5000
+          - path: /users
+            pathType: Prefix
+            backend:
+              service:
+                name: auth-service
+                port:
+                  number: 5000
           - path: /
             pathType: Prefix
             backend:
