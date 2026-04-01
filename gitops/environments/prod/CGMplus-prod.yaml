@@ -11,7 +11,7 @@ spec:
     path: gitops
   destination:
     server: https://kubernetes.default.svc
-    namespace: gtfs
+    namespace: services
   syncPolicy:
     automated:
       prune: true
