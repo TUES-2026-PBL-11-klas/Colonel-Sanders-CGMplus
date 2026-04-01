@@ -1,178 +1,193 @@
-import React from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-const LEAFLET_HTML = `
+const GTFS_BASE = `http://localhost:5000/api/v1`; //replace with your ip using "$ ip a" and getting wlp0s20f3
+const VEHICLE_POLL_MS = 10000;
+const MIN_ZOOM = 16;
+
+export default function MapScreen() {
+  const webViewRef = useRef<WebView>(null);
+  const [status, setStatus] = useState({ vehicles: 0, stops: 0, error: '' });
+
+  // ── Native Data Fetching ───────────────────────────────────────────────
+
+  const inject = (code: string) => {
+    webViewRef.current?.injectJavaScript(code + '; true;');
+  };
+
+  const fetchStops = async () => {
+    console.log('[Native] Fetching stops from:', `${GTFS_BASE}/static/static/stops`);
+    try {
+      let page = 1, pages = 1, all: any[] = [];
+      while (page <= pages) {
+        const res = await fetch(`${GTFS_BASE}/static/static/stops?page=${page}`);
+        if (!res.ok) throw new Error(`Stops HTTP ${res.status}`);
+        const data = await res.json();
+        all = all.concat(data.stops || []);
+        pages = data.pagination?.pages || 1;
+        page++;
+      }
+      console.log('[Native] Stops loaded:', all.length);
+      setStatus(prev => ({ ...prev, stops: all.length }));
+      inject(`window.receiveData('stops', ${JSON.stringify(all)})`);
+    } catch (e: any) {
+      console.error('[Native] Stops error:', e.message);
+      setStatus(prev => ({ ...prev, error: 'Stops: ' + e.message }));
+    }
+  };
+
+  const fetchVehicles = async () => {
+    try {
+      const res = await fetch(`${GTFS_BASE}/realtime/vehicle-positions`);
+      if (!res.ok) throw new Error(`Vehicles HTTP ${res.status}`);
+      const data = await res.json();
+      const list = data.vehicle_positions || [];
+      setStatus(prev => ({ ...prev, vehicles: list.length, error: '' }));
+      inject(`window.receiveData('vehicles', ${JSON.stringify(list)})`);
+    } catch (e: any) {
+      console.error('[Native] Vehicles error:', e.message);
+      setStatus(prev => ({ ...prev, error: 'Vehicles: ' + e.message }));
+    }
+  };
+
+  useEffect(() => {
+    fetchStops();
+    const timer = setInterval(fetchVehicles, VEHICLE_POLL_MS);
+    fetchVehicles(); // initial fetch
+    return () => clearInterval(timer);
+  }, []);
+
+  // ── Leaflet HTML ───────────────────────────────────────────────────────
+
+  const LEAFLET_HTML = `
 <!DOCTYPE html>
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- FIX 1: correct attribute name is referrerpolicy (no hyphen),
-       and origin-when-cross-origin lets OSM tile servers receive the
-       origin so they can serve tiles, while keeping full URLs private. -->
-  <meta name="referrerpolicy" content="origin-when-cross-origin" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-    body { margin: 0; padding: 0; }
+    body { margin: 0; padding: 0; font-family: sans-serif; }
     #map { width: 100vw; height: 100vh; }
+    .hud { background: rgba(255,255,255,0.9); padding: 8px; border: 1px solid #ccc; font-size: 11px; border-radius: 4px; }
+    .stop-icon  { font-size: 16px; line-height: 1; filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
+    .vehicle-icon { font-size: 24px; line-height: 1; filter: drop-shadow(0 1px 3px rgba(0,0,0,.5)); }
   </style>
 </head>
 <body>
   <div id="map"></div>
   <script>
-    const map = L.map('map').setView([42.6977, 23.3219], 13);
+    const MIN_ZOOM = ${MIN_ZOOM};
+    const map = L.map('map').setView([42.6977, 23.3219], 15);
 
-    // CartoDB Positron: clean basemap, no POI icons, no API key needed.
-    // Split into two layers so road/place labels remain visible above markers.
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ' +
-        '&copy; <a href="https://carto.com/">CARTO</a>',
-      subdomains: 'abcd',
-      referrerPolicy: 'origin-when-cross-origin',
-      maxZoom: 20,
+      subdomains: 'abcd', maxZoom: 20,
     }).addTo(map);
-
-    // Labels-only layer rendered in shadowPane so it sits above tiles but below markers.
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
-      subdomains: 'abcd',
-      referrerPolicy: 'origin-when-cross-origin',
-      maxZoom: 20,
-      pane: 'shadowPane',
+      subdomains: 'abcd', maxZoom: 20, pane: 'shadowPane',
     }).addTo(map);
 
-    // ── Icons per stop/station type ────────────────────────────────────────
-    function makeIcon(emoji) {
-      return L.divIcon({
-        className: '',
-        html: '<div style="font-size:20px;line-height:1;">' + emoji + '</div>',
-        iconSize: [26, 26],
-        iconAnchor: [13, 13],
-        popupAnchor: [0, -14],
-      });
+    const hud = L.control({ position: 'topright' });
+    hud.onAdd = function() {
+      this._div = L.DomUtil.create('div', 'hud');
+      this.update('Initializing…');
+      return this._div;
+    };
+    hud.update = function(html) { this._div.innerHTML = html; };
+    hud.addTo(map);
+
+    function updateHud(vCount, sCount, err) {
+      hud.update('<b>Native Bridge Active</b><br>' +
+                 'Vehicles: ' + vCount + '<br>' +
+                 'Stops (cache): ' + sCount +
+                 (err ? '<br><span style="color:red">Error: ' + err + '</span>' : ''));
     }
-    const icons = {
-      bus:     makeIcon('🚌'),
-      tram:    makeIcon('🚃'),
-      trolley: makeIcon('🚎'),
-      subway:  makeIcon('🚇'),
+
+    // ── Icons & Markers ──────────────────────────────────────────────────
+    function makeIcon(emoji, cls) {
+      return L.divIcon({ className: '', html: '<div class="' + cls + '">' + emoji + '</div>',
+                         iconSize: [28,28], iconAnchor: [14,14], popupAnchor: [0,-16] });
+    }
+    const ICONS = { s: makeIcon('📍', 'stop-icon'), v: makeIcon('🚌', 'vehicle-icon') };
+
+    const stopsLayer = L.layerGroup().addTo(map);
+    const vehicleMarkers = {};
+    let allStops = [];
+    let lastVehicles = [];
+
+    window.receiveData = function(type, data) {
+      if (type === 'stops') {
+        allStops = data;
+        renderStops();
+      } else if (type === 'vehicles') {
+        lastVehicles = data;
+        updateVehicles(data);
+      }
+      updateHud(Object.keys(vehicleMarkers).length, allStops.length, '');
     };
 
-    // ── Load static stops from Overpass API ───────────────────────────────
-    // FIX 3: queries only the four allowed node types so unrelated stops
-    // (ferry, aerialway, etc.) are never fetched or rendered.
-    const MIN_ZOOM_FOR_ICONS = 15;
-    let stopsMarkerGroup = L.featureGroup();
-    stopsMarkerGroup.addTo(map);
-
-    async function loadStops() {
-      // Only load and show icons when zoomed in enough
-      if (map.getZoom() < MIN_ZOOM_FOR_ICONS) {
-        stopsMarkerGroup.clearLayers();
-        return;
-      }
-
-      const query = \`
-        [out:json][timeout:25];
-        (
-          node["highway"="bus_stop"]({{bbox}});
-          node["railway"="tram_stop"]({{bbox}});
-          node["railway"="station"]["station"="subway"]({{bbox}});
-          node["trolleybus"="yes"]({{bbox}});
-        );
-        out body;
-      \`.replace(/\\{\\{bbox\\}\\}/g, getBbox());
-
-      try {
-        const res  = await fetch(
-          'https://overpass-api.de/api/interpreter',
-          { method: 'POST', body: 'data=' + encodeURIComponent(query) }
-        );
-        const data = await res.json();
-        stopsMarkerGroup.clearLayers();
-        data.elements.forEach(addStopMarker);
-      } catch (e) {
-        console.error('Overpass fetch failed', e);
-      }
-    }
-
-    function getBbox() {
-      const b = map.getBounds();
-      // Overpass expects: south,west,north,east
-      return [
-        b.getSouth().toFixed(6),
-        b.getWest().toFixed(6),
-        b.getNorth().toFixed(6),
-        b.getEast().toFixed(6),
-      ].join(',');
-    }
-
-    function detectType(tags) {
-      if (tags.railway === 'station' && tags.station === 'subway') return 'subway';
-      if (tags.railway === 'tram_stop')  return 'tram';
-      if (tags.trolleybus === 'yes')     return 'trolley';
-      if (tags.highway  === 'bus_stop')  return 'bus';
-      return null;
-    }
-
-    function addStopMarker(node) {
-      const type = detectType(node.tags || {});
-      if (!type) return;                          // skip anything unrecognised
-      const icon  = icons[type];
-      const name  = node.tags.name || (type.charAt(0).toUpperCase() + type.slice(1) + ' stop');
-      L.marker([node.lat, node.lon], { icon })
-        .bindPopup('<b>' + name + '</b><br/><small>' + type + '</small>')
-        .addTo(map);
-    }
-
-    // Load stops once the map is ready, and again after each pan/zoom.
-    map.whenReady(loadStops);
-    map.on('moveend', loadStops);
-
-    // ── Live vehicle feed (unchanged logic, same type filter) ─────────────
-    const vehicleMarkers = {};
-
-    function handleVehicles(vehicles) {
-      const seen         = new Set();
-      const allowedTypes = ['bus', 'tram', 'trolley', 'subway'];
-
-      vehicles.forEach(v => {
-        if (!allowedTypes.includes((v.type || '').toLowerCase())) return;
-        seen.add(v.id);
-        const icon = icons[(v.type || '').toLowerCase()] || icons.bus;
-        if (vehicleMarkers[v.id]) {
-          vehicleMarkers[v.id].setLatLng([v.lat, v.lng]);
-        } else {
-          vehicleMarkers[v.id] = L.marker([v.lat, v.lng], { icon })
-            .bindPopup('Route ' + v.routeId)
-            .addTo(map);
+    function renderStops() {
+      stopsLayer.clearLayers();
+      if (map.getZoom() < MIN_ZOOM) return;
+      const bounds = map.getBounds();
+      allStops.forEach(s => {
+        const lat = parseFloat(s.stop_lat || s.lat);
+        const lon = parseFloat(s.stop_lon || s.lon);
+        if (bounds.contains([lat, lon])) {
+          L.marker([lat, lon], { icon: ICONS.s })
+            .bindPopup('<b>' + s.stop_name + '</b><br>Спирка №: ' + (s.stop_code || '—'))
+            .addTo(stopsLayer);
         }
       });
+    }
 
-      Object.keys(vehicleMarkers).forEach(id => {
+    function updateVehicles(list) {
+      const seen = new Set();
+      const tooZoomedOut = map.getZoom() < MIN_ZOOM;
+
+      if (!tooZoomedOut) {
+        list.forEach(v => {
+          const id = v.vehicle?.id || v.id;
+          const lat = parseFloat(v.position?.latitude);
+          const lon = parseFloat(v.position?.longitude);
+          if (!id || isNaN(lat) || isNaN(lon)) return;
+          seen.add(id);
+          const popup = '<b>' + (v.trip?.route_id || 'Bus') + '</b><br>ID: ' + id;
+          if (vehicleMarkers[id]) {
+            vehicleMarkers[id].setLatLng([lat, lon]).getPopup().setContent(popup);
+          } else {
+            vehicleMarkers[id] = L.marker([lat, lon], { icon: ICONS.v }).bindPopup(popup).addTo(map);
+          }
+        });
+      }
+
+      for (const id in vehicleMarkers) {
         if (!seen.has(id)) {
           map.removeLayer(vehicleMarkers[id]);
           delete vehicleMarkers[id];
         }
-      });
+      }
     }
 
-    document.addEventListener('message', e => handleVehicles(JSON.parse(e.data)));
-    window.addEventListener('message',   e => handleVehicles(JSON.parse(e.data)));
+    map.on('moveend', function() {
+      renderStops();
+      updateVehicles(lastVehicles);
+    });
   </script>
 </body>
 </html>
 `;
 
-export default function MapScreen() {
   return (
     <View style={styles.container}>
       <WebView
+        ref={webViewRef}
         originWhitelist={['*']}
         source={{ html: LEAFLET_HTML }}
         style={styles.map}
         javaScriptEnabled
+        onMessage={(e) => console.log('[WebView]', e.nativeEvent.data)}
       />
     </View>
   );
@@ -180,5 +195,5 @@ export default function MapScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  map:       { flex: 1 },
+  map: { flex: 1 },
 });

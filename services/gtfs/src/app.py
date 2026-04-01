@@ -27,6 +27,13 @@ def create_app():
     api.register_blueprint(RealtimeBlueprint, url_prefix="/api/v1/realtime")
     api.register_blueprint(StaticBlueprint, url_prefix="/api/v1/static")
 
+    @app.after_request
+    def add_cors_headers(response):
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Headers'] = '*'
+        response.headers['Access-Control-Allow-Methods'] = '*'
+        return response
+
     start_scheduler()
 
     return app
