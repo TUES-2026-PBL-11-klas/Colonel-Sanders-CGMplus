@@ -1,0 +1,4 @@
+Flask==3.0.2
+flask-smorest==0.44.0
+marshmallow==3.21.0
+pytest==8.2.0
