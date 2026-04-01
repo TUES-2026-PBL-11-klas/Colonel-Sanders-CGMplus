@@ -75,3 +75,38 @@ To also remove the auth database volume:
 ```bash
 docker compose down -v
 ```
+
+## GitOps Branch Model
+
+- `development`: dev/test environment branch (minikube cluster on hosted PC)
+- `main`: production environment branch (Azure target)
+
+Argo CD applications:
+
+- Dev app manifest: [gitops/environments/dev/CGMplus-dev.yaml](gitops/environments/dev/CGMplus-dev.yaml)
+	: tracks `development`
+- Prod app manifest: [gitops/environments/prod/CGMplus-prod.yaml](gitops/environments/prod/CGMplus-prod.yaml)
+	: tracks `main`
+
+## Cluster Dev/Test Flow (minikube + Cloudflare)
+
+1. Push code to `development`.
+2. CI runs service tests from [GTFS CI workflow](.github/workflows/gtfs.yaml) and [AUTH CI workflow](.github/workflows/auth.yml).
+3. Build pipeline [deploy workflow](.github/workflows/deploy.yml):
+	 - builds/pushes `ghcr.io/<owner>/gtfs:<sha>`
+	 - builds/pushes `ghcr.io/<owner>/auth-new:<sha>`
+	 - updates GitOps deployment image tags in the same branch
+4. Argo CD in test cluster detects GitOps manifest change in `development` and syncs.
+5. Cloudflare Tunnel exposes ingress host publicly for testing.
+
+## Secrets Model
+
+- Dev/test: Vault + External Secrets in minikube cluster.
+- Production: Azure-managed secrets (for example Key Vault) is the target model.
+
+Current ExternalSecret manifests:
+
+- GTFS: [gitops/vault/externalsecret-gtfs.yaml](gitops/vault/externalsecret-gtfs.yaml)
+- Auth: [gitops/vault/externalsecret-auth.yaml](gitops/vault/externalsecret-auth.yaml)
+
+For detailed minikube bootstrap and Cloudflare steps, see [MINIKUBE-SETUP.md](MINIKUBE-SETUP.md).
