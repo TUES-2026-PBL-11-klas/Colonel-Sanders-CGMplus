@@ -1,150 +1,76 @@
 import { Animated, Dimensions, StyleSheet } from 'react-native';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const SCREEN_SIDE_PADDING = 16;
-const SHEET_SIDE_PADDING = 18;
 const SHEET_TOP_PADDING = 20;
-const SHEET_BOTTOM_PADDING = 12;
-const CARD_MAX_WIDTH = 440;
-const NFC_LOGO_SIZE = 34;
-const PANEL_GAP = 20;
-const DEBIT_CARD_ASPECT_RATIO = 1.586 / 1;
-const CARD_WIDTH = Math.min(
-  CARD_MAX_WIDTH,
-  SCREEN_WIDTH - SCREEN_SIDE_PADDING * 2 - SHEET_SIDE_PADDING * 2
-);
-const CARD_HEIGHT = CARD_WIDTH / DEBIT_CARD_ASPECT_RATIO;
+const SHEET_BOTTOM_PADDING = 40;
 
-export const SHEET_HEIGHT = Math.ceil(
-  SHEET_TOP_PADDING + NFC_LOGO_SIZE + PANEL_GAP + CARD_HEIGHT + SHEET_BOTTOM_PADDING + SHEET_SIDE_PADDING + 8
-);
+export const SHEET_HEIGHT = 280;
 
 export const walletStyles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    backgroundColor: 'transparent',
+    paddingHorizontal: 24,
+    paddingTop: 60,
   },
   headerRow: {
     width: '100%',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: 32,
   },
-  nfcTrigger: {
+  mainCardTrigger: {
     width: '100%',
-    borderRadius: 18,
-    borderWidth: 1,
-    paddingVertical: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  nfcLogoWrap: {
-    width: '100%',
-    height: NFC_LOGO_SIZE,
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: PANEL_GAP,
-  },
-  nfcGlowPulse: {
-    position: 'absolute',
-    width: 45,
-    height: 45,
-    borderRadius: 31,
-    backgroundColor: '#3BA7FF',
-  },
-  nfcGlowCore: {
-    position: 'absolute',
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(59, 167, 255, 0.24)',
-  },
-  nfcBar: {
-    width: '100%',
-    maxWidth: 440,
-    alignSelf: 'center',
-    aspectRatio: DEBIT_CARD_ASPECT_RATIO,
-    borderWidth: 1,
-    borderRadius: 24,
-    paddingHorizontal: 18,
-    paddingVertical: 18,
-    justifyContent: 'space-between',
+    aspectRatio: 1.586, // Standard ID/Bank card ratio
+    borderRadius: 28, // M3 Card Radius
     overflow: 'hidden',
+    position: 'relative',
+    elevation: 8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
   },
-  cardTopRow: {
-    flexDirection: 'row',
+  triggerGraphic: {
+    width: '120%',
+    height: '100%',
+    resizeMode: 'cover',
+    transform: [{ rotate: '180deg' }], // Flipped as requested
+    left: -40, // Offset heavily to the left
+  },
+  cardContentOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    padding: 24,
     justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  membershipPill: {
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    backgroundColor: 'rgba(0,0,0,0.15)', // Only slight tint
   },
   chip: {
-    width: 38,
-    height: 28,
-    borderRadius: 7,
+    width: 44,
+    height: 32,
+    borderRadius: 8,
     borderWidth: 1,
+    marginTop: 'auto', // Pushes to the bottom if alone, or keep at top
+    marginBottom: 16,
   },
-  cardNumber: {
-    letterSpacing: 2,
+  barelyVisibleNumbers: {
     fontSize: 20,
+    fontWeight: '600',
+    letterSpacing: 4,
+    color: '#FFF',
+    opacity: 0.65, // Increased visibility
+    textShadowColor: 'rgba(0,0,0,0.7)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+    alignSelf: 'flex-start',
   },
-  cardBottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  labelText: {
-    fontSize: 11,
-    opacity: 0.72,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  valueText: {
-    marginTop: 2,
-    fontSize: 15,
-  },
-  cardBareInner: {
-    alignItems: 'flex-end',
-    justifyContent: 'flex-end',
-    overflow: 'hidden',
-  },
-  cardGraphic: {
-    position: 'absolute',
-    left: -10,
-    top: 0,
-    bottom: 0,
-    width: '75%',
-    height: undefined,
-    aspectRatio: 1,
-    resizeMode: 'cover',
-    transform: [{ rotate: '180deg' }],
-    opacity: 0.9,
-  },
-  cardNumberBare: {
-    letterSpacing: 2,
-    fontSize: 12,
-    color: '#1d5448',
-    opacity: 1,
-    textAlign: 'right',
-    textShadowColor: 'rgba(255, 255, 255, 1)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 4,
-    transform: [{ translateY: 10 }],
-  },
-  nfcHint: {
-    marginTop: 10,
-    opacity: 0.72,
+  instructionHint: {
+    marginTop: 32,
+    fontSize: 14,
+    textAlign: 'center',
+    fontWeight: '500',
+    letterSpacing: 0.5,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 20,
-    backgroundColor: 'rgba(0,0,0,0.28)',
+    backgroundColor: 'rgba(0,0,0,0.4)', // M3 Scrim
   },
   overlayPressTarget: {
     flex: 1,
@@ -155,35 +81,54 @@ export const walletStyles = StyleSheet.create({
     left: 0,
     right: 0,
     height: SHEET_HEIGHT,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    borderWidth: 1,
-    borderTopWidth: 0,
-    paddingHorizontal: 18,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
     paddingTop: SHEET_TOP_PADDING,
     paddingBottom: SHEET_BOTTOM_PADDING,
-    gap: 0,
-    overflow: 'hidden',
     zIndex: 30,
+    elevation: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+  },
+  handleBarWrap: {
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingTop: 24, // Push below status bar safe area
+  },
+  handleBar: {
+    width: 48,
+    height: 6,
+    borderRadius: 3,
+    opacity: 0.4,
+  },
+  nfcActiveContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nfcScanningCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+    elevation: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
   },
   sheetText: {
-    opacity: 0.78,
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  sheetCaption: {
+    fontSize: 15,
   },
 });
-
-export const getNfcBarStyle = (
-  pressed: boolean,
-  borderColor: string,
-  cardBg: string,
-  accentColor: string
-) => [
-  walletStyles.nfcBar,
-  {
-    borderColor,
-    backgroundColor: accentColor || cardBg,
-    opacity: pressed ? 0.86 : 1,
-  },
-];
 
 export const getOverlayStyle = (overlayOpacity: Animated.Value) => [
   walletStyles.overlay,
@@ -197,7 +142,6 @@ export const getTopSheetStyle = (
 ) => [
   walletStyles.topSheet,
   {
-    borderColor,
     backgroundColor: cardBg,
     transform: [{ translateY }],
   },

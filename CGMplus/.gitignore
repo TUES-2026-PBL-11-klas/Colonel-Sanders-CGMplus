@@ -45,3 +45,6 @@ app-example
 
 # mock data
 constants/mock-data.ts
+
+#env files
+.env
