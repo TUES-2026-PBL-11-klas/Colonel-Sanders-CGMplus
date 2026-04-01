@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: gtfs
-          image: ghcr.io/tues-2026-pbl-11-klas/gtfs:050bb6fd1b627d937c9336c08c6e90b36aa9557b
+          image: ghcr.io/tues-2026-pbl-11-klas/gtfs:e1f1089fb0ed7db97dcf338d5ef90225dd658642
           imagePullPolicy: Always
           ports:
             - containerPort: 5000
