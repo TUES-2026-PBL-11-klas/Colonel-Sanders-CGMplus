@@ -1,3 +1,9 @@
+from dotenv import load_dotenv
+from os import getenv
+
+load_dotenv()
+
+
 class Config:
     API_TITLE = "User API"
     API_VERSION = "v1"
@@ -8,3 +14,15 @@ class Config:
     OPENAPI_SWAGGER_UI_URL = (
         "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
     )
+    JWT_SECRET_KEY = getenv("JWT_SECRET")
+    API_SPEC_OPTIONS = {
+        "components": {
+            "securitySchemes": {
+                "BearerAuth": {
+                    "type": "http",
+                    "scheme": "bearer",
+                    "bearerFormat": "JWT",
+                }
+            }
+        },
+    }
