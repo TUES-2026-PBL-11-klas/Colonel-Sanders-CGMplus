@@ -2,7 +2,7 @@ locals {
   namespaces = toset([
     "argocd",
     "external-secrets",
-    "gtfs",
+    "services",
     "ingress-nginx",
     "monitoring",
     "vault",
