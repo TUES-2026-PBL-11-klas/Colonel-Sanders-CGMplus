@@ -3,5 +3,4 @@ kind: Kustomization
 
 resources:
   - clustersecretstore.yaml
-  - externalsecret-gtfs.yaml
   - externalsecret-auth.yaml

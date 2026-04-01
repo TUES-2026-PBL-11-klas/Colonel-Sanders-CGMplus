@@ -14,11 +14,24 @@ def get_config_name() -> str:
         return "production"
     return "development"
 
+
+def build_db_uri_from_parts() -> str | None:
+    user = os.getenv("POSTGRES_USER")
+    password = os.getenv("POSTGRES_PASSWORD")
+    host = os.getenv("POSTGRES_HOST")
+    port = os.getenv("POSTGRES_PORT", "5432")
+    database = os.getenv("POSTGRES_DB")
+
+    if all([user, password, host, database]):
+        return f"postgresql://{user}:{password}@{host}:{port}/{database}"
+    return None
+
 def apply_runtime_config(app: Flask, name: str) -> None:
     app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET")
     app.config["DEBUG_METRICS"] = os.getenv("DEBUG_METRICS", "0") == "1"
+    sqlalchemy_uri = os.getenv("SQLALCHEMY_DATABASE_URI") or build_db_uri_from_parts()
     if name == "development":
-        app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("SQLALCHEMY_DATABASE_URI")
+        app.config["SQLALCHEMY_DATABASE_URI"] = sqlalchemy_uri
         app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = os.getenv(
             "SQLALCHEMY_TRACK_MODIFICATIONS", "False"
         )
@@ -28,7 +41,7 @@ def apply_runtime_config(app: Flask, name: str) -> None:
         )
         app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     elif name == "production":
-        app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("SQLALCHEMY_DATABASE_URI")
+        app.config["SQLALCHEMY_DATABASE_URI"] = sqlalchemy_uri
         app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = os.getenv(
             "SQLALCHEMY_TRACK_MODIFICATIONS", "False"
         )

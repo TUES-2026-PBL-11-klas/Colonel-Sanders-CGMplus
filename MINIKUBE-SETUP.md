@@ -80,20 +80,23 @@ kubectl apply -f ../gitops/environments/dev/CGMplus-dev.yaml -n argocd
 kubectl get application -n argocd
 ```
 
-Argo CD will sync ingress + gtfs + auth + vault external secrets from `development` branch.
+Argo CD will sync ingress + postgres + gtfs + auth + vault external secrets from `development` branch.
 
 ## 5) Configure Vault Secrets for Dev/Test
 
 ExternalSecret keys expected:
 
-- `secret/data/gtfs`:
+- `secret/data/auth`:
+	- `POSTGRES_HOST` (use `auth-postgres`)
+	- `POSTGRES_PORT` (usually `5432`)
+	- `POSTGRES_DB`
 	- `POSTGRES_USER`
 	- `POSTGRES_PASSWORD`
-	- `POSTGRES_DB`
-	- `POSTGRES_PORT`
-- `secret/data/auth`:
-	- `SQLALCHEMY_DATABASE_URI`
 	- `JWT_SECRET`
+
+The auth service builds `SQLALCHEMY_DATABASE_URI` from those fields at runtime.
+
+PostgreSQL runs in-cluster as service `auth-postgres` in namespace `services`.
 
 ## 6) Configure Cloudflare Tunnel
 
@@ -152,7 +155,7 @@ kubectl get ingress -A
 kubectl get svc -A
 ```
 
-You should see only your application ingress resource in namespace `gtfs`, while Argo CD and monitoring services remain `ClusterIP`.
+You should see only your application ingress resource in namespace `services`, while Argo CD and monitoring services remain `ClusterIP`.
 
 ## 7) Deployment Flow
 
