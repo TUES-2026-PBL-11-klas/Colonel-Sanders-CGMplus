@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: auth
-          image: ghcr.io/tues-2026-pbl-11-klas/auth-new:e1f1089fb0ed7db97dcf338d5ef90225dd658642
+          image: ghcr.io/tues-2026-pbl-11-klas/auth-new:a635dc53c559ff0960c8229d7b262534dee18c57
           imagePullPolicy: Always
           ports:
             - containerPort: 5000
