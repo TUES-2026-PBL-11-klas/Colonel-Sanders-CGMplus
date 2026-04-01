@@ -1,5 +1,7 @@
 server:
   insecure: true
+  ingress:
+    enabled: false
 
 configs:
   params:

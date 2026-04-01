@@ -1,6 +1,11 @@
 grafana:
   enabled: true
   adminPassword: admin
+  ingress:
+    enabled: false
+  sidecar:
+    datasources:
+      defaultDatasourceEnabled: false
   persistence:
     enabled: false
   datasources:
@@ -17,6 +22,8 @@ grafana:
 
 prometheus:
   enabled: true
+  ingress:
+    enabled: false
   prometheusSpec:
     retention: 3d
     resources:
@@ -29,6 +36,8 @@ prometheus:
 
 alertmanager:
   enabled: true
+  ingress:
+    enabled: false
   config:
     global: {}
     route:
