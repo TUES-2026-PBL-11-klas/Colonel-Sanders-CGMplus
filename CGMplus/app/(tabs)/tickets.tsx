@@ -3,15 +3,12 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme } 
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { MOCK_TICKETS } from '@/constants/mock-data';
 
 export default function TicketsScreen() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
 
-  const MOCK_TICKETS = [
-    { id: '1', title: 'Monthly Line 1 Pass', type: 'Bus', status: 'Active', expiry: 'Oct 30, 2026' },
-    { id: '2', title: 'Single Trip', type: 'Tram', status: 'Unused', expiry: 'No Expiry' },
-  ];
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>

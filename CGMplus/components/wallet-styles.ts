@@ -4,7 +4,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const SHEET_TOP_PADDING = 20;
 const SHEET_BOTTOM_PADDING = 40;
 
-export const SHEET_HEIGHT = 280;
+export const SHEET_HEIGHT = 460;
 
 export const walletStyles = StyleSheet.create({
   container: {
@@ -19,8 +19,8 @@ export const walletStyles = StyleSheet.create({
   },
   mainCardTrigger: {
     width: '100%',
-    aspectRatio: 1.586, // Standard ID/Bank card ratio
-    borderRadius: 28, // M3 Card Radius
+    aspectRatio: 1.586,
+    borderRadius: 28,
     overflow: 'hidden',
     position: 'relative',
     elevation: 8,
@@ -32,21 +32,21 @@ export const walletStyles = StyleSheet.create({
     width: '120%',
     height: '100%',
     resizeMode: 'cover',
-    transform: [{ rotate: '180deg' }], // Flipped as requested
-    left: -40, // Offset heavily to the left
+    transform: [{ rotate: '180deg' }],
+    left: -40,
   },
   cardContentOverlay: {
     ...StyleSheet.absoluteFillObject,
     padding: 24,
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(0,0,0,0.15)', // Only slight tint
+    backgroundColor: 'rgba(0,0,0,0.15)',
   },
   chip: {
     width: 44,
     height: 32,
     borderRadius: 8,
     borderWidth: 1,
-    marginTop: 'auto', // Pushes to the bottom if alone, or keep at top
+    marginTop: 'auto',
     marginBottom: 16,
   },
   barelyVisibleNumbers: {
@@ -54,7 +54,7 @@ export const walletStyles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 4,
     color: '#FFF',
-    opacity: 0.65, // Increased visibility
+    opacity: 0.65,
     textShadowColor: 'rgba(0,0,0,0.7)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
@@ -70,7 +70,7 @@ export const walletStyles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 20,
-    backgroundColor: 'rgba(0,0,0,0.4)', // M3 Scrim
+    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   overlayPressTarget: {
     flex: 1,
@@ -81,8 +81,8 @@ export const walletStyles = StyleSheet.create({
     left: 0,
     right: 0,
     height: SHEET_HEIGHT,
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
     paddingTop: SHEET_TOP_PADDING,
     paddingBottom: SHEET_BOTTOM_PADDING,
     zIndex: 30,
@@ -94,39 +94,70 @@ export const walletStyles = StyleSheet.create({
   },
   handleBarWrap: {
     alignItems: 'center',
-    marginBottom: 20,
-    paddingTop: 24, // Push below status bar safe area
+    marginBottom: 40,
+    paddingTop: 12,
   },
   handleBar: {
-    width: 48,
-    height: 6,
-    borderRadius: 3,
-    opacity: 0.4,
+    width: 32,
+    height: 3,
+    borderRadius: 1,
+    opacity: 0.2,
   },
   nfcActiveContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingBottom: 20,
   },
   nfcScanningCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
+    elevation: 2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+  },
+  sheetText: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 8,
+    letterSpacing: -0.2,
+  },
+  sheetCaption: {
+    fontSize: 14,
+    opacity: 0.7,
+  },
+  qrContainer: {
+    width: 240,
+    aspectRatio: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
     elevation: 4,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
   },
-  sheetText: {
-    fontSize: 22,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  sheetCaption: {
-    fontSize: 15,
+  bottomSheet: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: SHEET_HEIGHT,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingTop: SHEET_TOP_PADDING,
+    paddingBottom: SHEET_BOTTOM_PADDING,
+    zIndex: 30,
+    elevation: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
   },
 });
 
@@ -141,6 +172,18 @@ export const getTopSheetStyle = (
   translateY: Animated.Value
 ) => [
   walletStyles.topSheet,
+  {
+    backgroundColor: cardBg,
+    transform: [{ translateY }],
+  },
+];
+
+export const getBottomSheetStyle = (
+  borderColor: string,
+  cardBg: string,
+  translateY: Animated.Value
+) => [
+  walletStyles.bottomSheet,
   {
     backgroundColor: cardBg,
     transform: [{ translateY }],

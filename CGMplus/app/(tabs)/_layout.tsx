@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HapticTab } from '@/components/haptic-tab';
@@ -32,8 +33,8 @@ export default function TabLayout() {
           backgroundColor: Colors[colorScheme ?? 'light'].surface,
           borderTopLeftRadius: 28,
           borderTopRightRadius: 28,
-          borderTopWidth: 0,
-          overflow: 'hidden',
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: Colors[colorScheme ?? 'light'].outline + '55',
           paddingTop: 30,
           paddingBottom: bottom,
           shadowColor: '#000',

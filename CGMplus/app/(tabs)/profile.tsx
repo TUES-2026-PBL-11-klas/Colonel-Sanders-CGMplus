@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   useColorScheme,
   Image,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/auth-context';
@@ -113,10 +114,7 @@ export default function ProfileScreen() {
                    <Ionicons name="person" size={32} color={theme.onPrimaryContainer} />
                 </View>
                 <View>
-                  <Text style={styles.graphicText}>{user?.email || 'Guest User'}</Text>
-                  <Text style={[styles.badgeText, { color: theme.primaryContainer }]}>
-                    {user ? 'Verified Account' : 'Unregistered'}
-                  </Text>
+                  <Text style={styles.graphicText}>{user?.name || user?.email || 'Guest User'}</Text>
                 </View>
               </View>
             </View>
@@ -130,19 +128,15 @@ export default function ProfileScreen() {
                 label="Change Password" 
                 onPress={() => setPasswordModalVisible(true)} 
               />
-              <View style={[styles.separator, { backgroundColor: theme.surfaceVariant }]} />
-              <ProfileItem 
-                icon="notifications" 
-                label="Notifications" 
-                onPress={() => {}} 
-              />
             </View>
 
             <Text style={[styles.sectionTitle, { color: theme.primary, marginTop: 24 }]}>Support</Text>
             <View style={[styles.cardBlock, { backgroundColor: theme.surface }]}>
-              <ProfileItem icon="help-circle" label="Help Center" onPress={() => {}} />
+              <ProfileItem icon="help-circle" label="Help Center" onPress={() => Linking.openURL('http://192.168.1.164/support')} />
               <View style={[styles.separator, { backgroundColor: theme.surfaceVariant }]} />
-              <ProfileItem icon="document-text" label="Terms & Privacy" onPress={() => {}} />
+              <ProfileItem icon="document-text" label="Terms of Service" onPress={() => Linking.openURL('http://192.168.1.164/terms')} />
+              <View style={[styles.separator, { backgroundColor: theme.surfaceVariant }]} />
+              <ProfileItem icon="shield-checkmark" label="Privacy Policy" onPress={() => Linking.openURL('http://192.168.1.164/privacy')} />
             </View>
 
             {user && (
