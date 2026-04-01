@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: gtfs
-  namespace: gtfs
+  namespace: services
   labels:
     app: gtfs
 spec:
@@ -21,9 +21,6 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 5000
-          envFrom:
-            - secretRef:
-                name: gtfs-app-secrets
           readinessProbe:
             httpGet:
               path: /health/
