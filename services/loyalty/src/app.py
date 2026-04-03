@@ -3,7 +3,8 @@ from src.extensions import (
     api,
     jwt
 )
-from src.routes.points import blp as PointBlueprint
+from src.routes.profile import blp as PointBlueprint
+from src.routes.internal import blp as InternalBlueprint
 
 
 def create_app():
@@ -16,5 +17,6 @@ def create_app():
 
 
     api.register_blueprint(PointBlueprint)
+    api.register_blueprint(InternalBlueprint)
 
     return app
