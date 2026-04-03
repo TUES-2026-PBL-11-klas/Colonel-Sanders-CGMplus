@@ -98,13 +98,11 @@ The auth service builds `SQLALCHEMY_DATABASE_URI` from those fields at runtime.
 
 PostgreSQL runs in-cluster as service `auth-postgres` in namespace `services`.
 
-## 6) Configure Cloudflare Tunnel
+## 6) Configure Cloudflare Tunnel(FREE)
 
 ```bash
-cloudflared tunnel create cgmplus-dev
-cloudflared tunnel route dns cgmplus-dev cgmplus-dev.example.com
 kubectl port-forward -n ingress-nginx svc/ingress-nginx-controller 8080:80
-cloudflared tunnel run cgmplus-dev --url http://localhost:8080
+cloudflared tunnel --url http://localhost:8080
 ```
 
 Keep host in [gitops/ingress/ingress.yaml](gitops/ingress/ingress.yaml) aligned with your Cloudflare DNS.
