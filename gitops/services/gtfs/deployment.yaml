@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: gtfs
-          image: docker.io/vnzmiau/gtfs:a635dc53c559ff0960c8229d7b262534dee18c57
+          image: docker.io/vilibalchev5/gtfs:86300b349e5893247fb7924a498e13240653b51f
           imagePullPolicy: Always
           ports:
             - containerPort: 5000
