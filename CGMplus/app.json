@@ -45,7 +45,7 @@
         }
       ],
       "react-native-nfc-manager",
-      "expo-asset"
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,

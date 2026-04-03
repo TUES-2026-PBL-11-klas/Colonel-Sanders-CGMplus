@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
-  Image,
   PanResponder,
   Platform,
   Pressable,
   View,
+  BackHandler,
+  Image,
+  Text,
+  useColorScheme,
   type GestureResponderEvent,
   type PanResponderGestureState,
 } from 'react-native';
@@ -13,22 +16,8 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useThemeColor } from '@/hooks/use-theme-color';
-import { membershipCardMock } from '@/constants/membership-card-mock';
-
-// Only import HCE on native platforms
-let HCESession: any;
-let NFCTagType4: any;
-let NFCTagType4NDEFContentType: any;
-
-if (Platform.OS !== 'web') {
-  const hceModule = require('react-native-hce');
-  HCESession = hceModule.HCESession;
-  NFCTagType4 = hceModule.NFCTagType4;
-  NFCTagType4NDEFContentType = hceModule.NFCTagType4NDEFContentType;
-}
+import { Colors } from '@/constants/theme';
 import {
-  getNfcBarStyle,
   getOverlayStyle,
   getTopSheetStyle,
   SHEET_HEIGHT,
@@ -39,20 +28,16 @@ export default function ExploreScreen() {
   const [isOpen, setIsOpen] = useState(false);
   const translateY = useRef(new Animated.Value(-SHEET_HEIGHT)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const glowPulse = useRef(new Animated.Value(0)).current;
 
+  // NFC Logic
   const startHceBroadcast = async () => {
     try {
-      const tag = new NFCTagType4({
-        type: NFCTagType4NDEFContentType.Text,
-        content: `CGMplus|${membershipCardMock.cardNumber}|${membershipCardMock.holderName}`,
-        writable: false
-      });
       const session = await HCESession.getInstance();
+      const tag = new NFCTagType4({ type: NFCTagType4NDEFContentType.Text, content: 'CGMplus-SecurePass', writable: false });
       await session.setApplication(tag);
       await session.setEnabled(true);
     } catch (e) {
-      console.warn('Failed to start HCE broadcasting', e);
+      // Ignored
     }
   };
 
@@ -71,8 +56,11 @@ export default function ExploreScreen() {
     };
   }, []);
 
-  const borderColor = useThemeColor({ light: '#d9dde3', dark: '#343a40' }, 'icon');
-  const cardBg = useThemeColor({ light: '#f7fafc', dark: '#1f2428' }, 'background');
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? 'light'];
+
+  const borderColor = theme.outline || '#d9dde3';
+  const cardBg = theme.surface || '#f7fafc';
 
   const openSheet = () => {
     setIsOpen(true);
@@ -109,6 +97,18 @@ export default function ExploreScreen() {
     ]).start(() => setIsOpen(false));
   };
 
+  useEffect(() => {
+    const onBackPress = () => {
+      if (isOpen) {
+        closeSheet();
+        return true;
+      }
+      return false;
+    };
+    const backSubscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => backSubscription.remove();
+  }, [isOpen]);
+
   const releaseSheet = (_event: GestureResponderEvent, gesture: PanResponderGestureState) => {
     if (gesture.dy < -40 || gesture.vy < -0.8) {
       closeSheet();
@@ -136,56 +136,38 @@ export default function ExploreScreen() {
     })
   ).current;
 
-  useEffect(() => {
-    if (!isOpen) {
-      glowPulse.stopAnimation();
-      glowPulse.setValue(0);
-      return;
-    }
-
-    const glowLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowPulse, {
-          toValue: 1,
-          duration: 900,
-          useNativeDriver: true,
-        }),
-        Animated.timing(glowPulse, {
-          toValue: 0,
-          duration: 900,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-
-    glowLoop.start();
-    return () => glowLoop.stop();
-  }, [isOpen, glowPulse]);
-
-  const glowScale = glowPulse.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 1.52],
-  });
-
-  const glowOpacity = glowPulse.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.34, 0.08],
-  });
-
   return (
-    <ThemedView style={walletStyles.container}>
+    <ThemedView style={[walletStyles.container, { backgroundColor: theme.background }]}>
       <View style={walletStyles.headerRow}>
-        <ThemedText type="title">Wallet</ThemedText>
+        <ThemedText type="title">Digital Pass</ThemedText>
       </View>
 
+      {/* Main card acts as the trigger instead of an NFC button */}
       <Pressable
         onPress={openSheet}
         style={({ pressed }) => [
-          walletStyles.nfcTrigger,
-          { borderColor, backgroundColor: cardBg, opacity: pressed ? 0.85 : 1 },
+          walletStyles.mainCardTrigger,
+          { 
+            backgroundColor: theme.primaryContainer, 
+            opacity: pressed ? 0.9 : 1,
+            shadowColor: '#000'
+          },
         ]}>
-        <MaterialIcons name="nfc" size={44} color={borderColor} />
+        <Image
+          source={require('@/assets/graphics/card-graphic.jpg')}
+          style={walletStyles.triggerGraphic}
+        />
+        <View style={walletStyles.cardContentOverlay}>
+          <View style={[walletStyles.chip, { borderColor: 'rgba(255,255,255,0.4)', backgroundColor: 'rgba(255,255,255,0.2)' }]} />
+          <Text style={walletStyles.barelyVisibleNumbers}>
+            1234  5678  9012  3456
+          </Text>
+        </View>
       </Pressable>
+
+      <Text style={[walletStyles.instructionHint, { color: theme.onSurfaceVariant }]}>
+         <MaterialIcons name="contactless" size={16} color={theme.onSurfaceVariant} style={{marginRight: 4}} /> Tap card to use pass
+      </Text>
 
       {isOpen ? (
         <Animated.View style={getOverlayStyle(overlayOpacity)}>
@@ -195,30 +177,18 @@ export default function ExploreScreen() {
 
       <Animated.View
         pointerEvents={isOpen ? 'auto' : 'none'}
-        style={[
-          getTopSheetStyle(borderColor, cardBg, translateY),
-          !isOpen && { opacity: 0 }
-        ]}
+        style={getTopSheetStyle(borderColor, theme.surface, translateY)}
         {...panResponder.panHandlers}>
-        <View style={walletStyles.nfcLogoWrap}>
-          <Animated.View
-            style={[
-              walletStyles.nfcGlowPulse,
-              { opacity: glowOpacity, transform: [{ scale: glowScale }] },
-            ]}
-          />
-          <View style={walletStyles.nfcGlowCore} />
-          <MaterialIcons name="nfc" size={34} color="#2A8CFF" />
+        <View style={walletStyles.handleBarWrap}>
+          <View style={[walletStyles.handleBar, { backgroundColor: theme.outline }]} />
         </View>
 
-        <View style={[getNfcBarStyle(false, borderColor, cardBg, '#ffffff'), walletStyles.cardBareInner]}>
-          <Image
-            source={require('@/assets/graphics/card-graphic.jpg')}
-            style={walletStyles.cardGraphic}
-          />
-          <ThemedText type="subtitle" style={walletStyles.cardNumberBare}>
-            {membershipCardMock.cardNumber}
-          </ThemedText>
+        <View style={walletStyles.nfcActiveContainer}>
+           <View style={[walletStyles.nfcScanningCircle, { backgroundColor: theme.primaryContainer }]}>
+               <MaterialIcons name="contactless" size={54} color={theme.onPrimaryContainer} />
+           </View>
+           <Text style={[walletStyles.sheetText, { color: theme.onSurface }]}>Ready to Scan</Text>
+           <Text style={[walletStyles.sheetCaption, { color: theme.onSurfaceVariant }]}>Hold near the transit reader</Text>
         </View>
       </Animated.View>
     </ThemedView>
