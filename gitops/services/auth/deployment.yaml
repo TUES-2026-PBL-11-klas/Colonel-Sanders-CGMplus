@@ -17,7 +17,11 @@ spec:
     spec:
       containers:
         - name: auth
+<<<<<<< Updated upstream
           image: ghcr.io/tues-2026-pbl-11-klas/auth-new:latest
+=======
+          image: docker.io/vnzmiau/auth-new:a635dc53c559ff0960c8229d7b262534dee18c57
+>>>>>>> Stashed changes
           imagePullPolicy: Always
           ports:
             - containerPort: 5000

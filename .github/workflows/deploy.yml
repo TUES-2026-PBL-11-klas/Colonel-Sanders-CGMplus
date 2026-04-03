@@ -11,7 +11,6 @@ on:
 
 permissions:
   contents: write
-  packages: write
 
 jobs:
   build-and-push-images:
@@ -32,7 +31,7 @@ jobs:
             manifest_path: gitops/services/auth/deployment.yaml
 
     env:
-      REGISTRY: ghcr.io
+      REGISTRY: docker.io
 
     steps:
       - name: Checkout
@@ -40,15 +39,15 @@ jobs:
 
       - name: Set lowercase image name
         run: |
-          IMAGE_NAME="${{ github.repository_owner }}/${{ matrix.image_name }}"
+          IMAGE_NAME="${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image_name }}"
           echo "IMAGE_NAME_LC=$(echo ${IMAGE_NAME} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
       - name: Build Docker image
         run: |
           docker build -t ${REGISTRY}/${IMAGE_NAME_LC}:${{ github.sha }} -f ${{ matrix.dockerfile }} ${{ matrix.context }}
 
-      - name: Login to GitHub Container Registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${REGISTRY} -u ${{ github.actor }} --password-stdin
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login ${REGISTRY} -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
       - name: Push image
         run: docker push ${REGISTRY}/${IMAGE_NAME_LC}:${{ github.sha }}
@@ -81,10 +80,10 @@ jobs:
 
       - name: Update image tags in GitOps manifests
         run: |
-          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          DOCKERHUB_USER_LC=$(echo "${{ secrets.DOCKERHUB_USERNAME }}" | tr '[:upper:]' '[:lower:]')
 
-          sed -i "s|image: .*ghcr.io/.*/gtfs:.*|image: ghcr.io/${OWNER_LC}/gtfs:${{ github.sha }}|" gitops/services/gtfs/deployment.yaml
-          sed -i "s|image: .*ghcr.io/.*/auth-new:.*|image: ghcr.io/${OWNER_LC}/auth-new:${{ github.sha }}|" gitops/services/auth/deployment.yaml
+          sed -i "s|image: .*[/]gtfs:.*|image: docker.io/${DOCKERHUB_USER_LC}/gtfs:${{ github.sha }}|" gitops/services/gtfs/deployment.yaml
+          sed -i "s|image: .*[/]auth-new:.*|image: docker.io/${DOCKERHUB_USER_LC}/auth-new:${{ github.sha }}|" gitops/services/auth/deployment.yaml
 
       - name: Commit and push manifest changes
         run: |
