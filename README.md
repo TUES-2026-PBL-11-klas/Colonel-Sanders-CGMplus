@@ -93,8 +93,12 @@ Argo CD applications:
 1. Push code to `development`.
 2. CI runs service tests from [GTFS CI workflow](.github/workflows/gtfs.yaml) and [AUTH CI workflow](.github/workflows/auth.yml).
 3. Build pipeline [deploy workflow](.github/workflows/deploy.yml):
-	 - builds/pushes `ghcr.io/<owner>/gtfs:<sha>`
-	 - builds/pushes `ghcr.io/<owner>/auth-new:<sha>`
+	 - builds/pushes `docker.io/<dockerhub-username>/gtfs:<sha>`
+	 - builds/pushes `docker.io/<dockerhub-username>/auth-new:<sha>`
+
+	 Required GitHub repository secrets for image publish:
+	 - `DOCKERHUB_USERNAME`
+	 - `DOCKERHUB_TOKEN` (Docker Hub access token)
 	 - updates GitOps deployment image tags in the same branch
 4. Argo CD in test cluster detects GitOps manifest change in `development` and syncs.
 5. Cloudflare Tunnel exposes ingress host publicly for testing.

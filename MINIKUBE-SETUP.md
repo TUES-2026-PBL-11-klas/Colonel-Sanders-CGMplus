@@ -6,7 +6,7 @@ This guide configures the hosted test machine to behave close to production:
 - ingress-nginx
 - Argo CD GitOps sync
 - Vault + External Secrets for injected runtime secrets
-- images from GHCR
+- images from Docker Hub
 - Cloudflare Tunnel exposure
 
 ## Branch to Environment Mapping
@@ -160,7 +160,7 @@ You should see only your application ingress resource in namespace `services`, w
 ## 7) Deployment Flow
 
 1. Push to `development`.
-2. Service build workflow builds/pushes images to GHCR.
+2. Service build workflow builds/pushes images to Docker Hub.
 3. Workflow updates image tags in GitOps manifests on `development`.
 4. Argo CD syncs and rolls out new pods in minikube.
 
@@ -173,7 +173,7 @@ Typical production changes:
 1. point Terraform providers to AKS kubeconfig
 2. apply [gitops/environments/prod/CGMplus-prod.yaml](gitops/environments/prod/CGMplus-prod.yaml)
 3. replace dev Vault flow with Azure-managed secrets (for example Key Vault + External Secrets provider)
-4. optionally move image registry from GHCR to ACR
+4. optionally move image registry from Docker Hub to ACR
 
 ## Cleanup
 
