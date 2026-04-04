@@ -11,7 +11,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: your-tan-motivation-mid.trycloudflare.com
+    - host: secrets-thursday-gallery-vacuum.trycloudflare.com
       http:
         paths:
           - path: /auth(/|$)(.*)
