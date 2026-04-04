@@ -6,27 +6,29 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
   ingressClassName: nginx
   rules:
     - host: your-tan-motivation-mid.trycloudflare.com
       http:
         paths:
-          - path: /auth
+          - path: /auth(/|$)(.*)
             pathType: Prefix
             backend:
               service:
                 name: auth-service
                 port:
                   number: 5000
-          - path: /users
+          - path: /users(/|$)(.*)
             pathType: Prefix
             backend:
               service:
                 name: auth-service
                 port:
                   number: 5000
-          - path: /gtfs
+          - path: /gtfs(/|$)(.*)
             pathType: Prefix
             backend:
               service:
