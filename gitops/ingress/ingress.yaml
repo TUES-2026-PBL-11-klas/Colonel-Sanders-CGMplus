@@ -6,30 +6,49 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
-    nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
   ingressClassName: nginx
   rules:
     - host: secrets-thursday-gallery-vacuum.trycloudflare.com
       http:
         paths:
-          - path: /auth(/|$)(.*)
-            pathType: ImplementationSpecific
+          - path: /auth
+            pathType: Prefix
             backend:
               service:
                 name: auth-service
                 port:
                   number: 5000
-          - path: /users(/|$)(.*)
-            pathType: ImplementationSpecific
+          - path: /users
+            pathType: Prefix
             backend:
               service:
                 name: auth-service
                 port:
                   number: 5000
-          - path: /gtfs(/|$)(.*)
-            pathType: ImplementationSpecific
+          - path: /api/v1/realtime
+            pathType: Prefix
+            backend:
+              service:
+                name: gtfs-service
+                port:
+                  number: 5000
+          - path: /api/v1/static
+            pathType: Prefix
+            backend:
+              service:
+                name: gtfs-service
+                port:
+                  number: 5000
+          - path: /status
+            pathType: Prefix
+            backend:
+              service:
+                name: gtfs-service
+                port:
+                  number: 5000
+          - path: /
+            pathType: Prefix
             backend:
               service:
                 name: gtfs-service
