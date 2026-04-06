@@ -9,7 +9,6 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: secrets-thursday-gallery-vacuum.trycloudflare.com
       http:
         paths:
           - path: /auth
