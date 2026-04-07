@@ -25,7 +25,7 @@ export default function TabLayout() {
 
         tabBarButton: HapticTab,
         tabBarStyle: {
-          position: 'fixed',
+          position: 'static',
           bottom: 0,
           left: 0,
           right: 0,
