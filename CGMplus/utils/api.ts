@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
-const API_BASE_URL = Platform.OS === 'android' ? 'http://192.168.1.164:5000' : 'http://localhost:5000';
+const API_BASE_URL = Platform.OS === 'android' ? 'http://192.168.1.52:5000' : 'http://localhost:5000'; //your ip, use ip a to find it
 
 export interface AuthResponse {
   access_token: string;
@@ -56,7 +56,7 @@ class API {
         if (refreshResponse.ok) {
           const data: AuthResponse = await refreshResponse.json();
           await setTokens(data.access_token, data.refresh_token);
-          
+
           // Retry original request with new token
           headers['Authorization'] = `Bearer ${data.access_token}`;
           return fetch(`${API_BASE_URL}${endpoint}`, {

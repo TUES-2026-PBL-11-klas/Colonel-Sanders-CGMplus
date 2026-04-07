@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme } 
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { MOCK_TICKETS } from '@/constants/mock-data';
+import { MOCK_TICKETS, type Ticket } from '@/constants/mock-data';
 
 export default function TicketsScreen() {
   const colorScheme = useColorScheme();
@@ -13,39 +13,39 @@ export default function TicketsScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        
+
         <Animated.View entering={FadeInUp.delay(100).duration(600)} style={styles.header}>
           <Text style={[styles.title, { color: theme.text }]}>My Tickets</Text>
           <Text style={[styles.subtitle, { color: theme.onSurfaceVariant }]}>Active passes and trips</Text>
         </Animated.View>
 
-        {MOCK_TICKETS.map((ticket, index) => (
-          <Animated.View 
+        {MOCK_TICKETS.map((ticket: Ticket, index: number) => (
+          <Animated.View
             entering={FadeInDown.delay(200 + index * 100).duration(600)}
             key={ticket.id}
           >
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.ticketCard, { backgroundColor: theme.surface, shadowColor: '#000' }]}
               activeOpacity={0.8}
             >
               <View style={[styles.ticketHeader, { borderBottomColor: theme.surfaceVariant }]}>
                 <View style={styles.ticketHeaderLeft}>
                   <View style={[styles.iconContainer, { backgroundColor: theme.primaryContainer }]}>
-                    <Ionicons 
-                      name={ticket.type === 'Bus' ? 'bus' : 'train'} 
-                      size={24} 
-                      color={theme.onPrimaryContainer} 
+                    <Ionicons
+                      name={ticket.type === 'Bus' ? 'bus' : 'train'}
+                      size={24}
+                      color={theme.onPrimaryContainer}
                     />
                   </View>
                   <Text style={[styles.ticketTitle, { color: theme.onSurface }]}>{ticket.title}</Text>
                 </View>
               </View>
-              
+
               <View style={styles.ticketBody}>
                 <View style={styles.infoRow}>
                   <Text style={[styles.infoLabel, { color: theme.onSurfaceVariant }]}>Status</Text>
                   <Text style={[
-                      styles.infoValue, 
+                      styles.infoValue,
                       { color: ticket.status === 'Active' ? theme.mint : theme.primary }
                     ]}>
                     {ticket.status}

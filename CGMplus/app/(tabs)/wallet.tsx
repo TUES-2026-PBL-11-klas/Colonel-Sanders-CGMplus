@@ -8,7 +8,6 @@ import {
   Image,
   Text,
   ScrollView,
-  TouchableOpacity,
   useColorScheme,
   type PanResponderGestureState,
 } from 'react-native';
@@ -22,16 +21,10 @@ import QRCodeStyled from 'react-native-qrcode-styled';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
-import {
-  getOverlayStyle,
-  getTopSheetStyle,
-  getBottomSheetStyle,
-  SHEET_HEIGHT,
-  walletStyles,
-} from '../../components/wallet-styles';
+
+import { getOverlayStyle, SHEET_HEIGHT, walletStyles} from '../../components/wallet-styles';
 
 import { MOCK_CARD, MOCK_LOYALTY } from '@/constants/mock-data';
-// Mock data moved to @/constants/mock-data
 
 const nfcPayload = 'CGMplus-SecurePass';
 const qrValue = `${nfcPayload} | ${MOCK_CARD.number}`;

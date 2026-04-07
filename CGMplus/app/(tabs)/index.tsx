@@ -15,8 +15,7 @@ import {
   walletStyles,
 } from '../../components/wallet-styles';
 
-import { MOCK_CARD, MOCK_LOYALTY } from '@/constants/mock-data';
-// Mock data moved to @/constants/mock-data
+import { membershipCardMock, MOCK_TICKETS, MOCK_LOYALTY } from '@/constants/mock-data';
 
 const QR_HEIGHT = 540;
 
@@ -42,7 +41,7 @@ export default function HomeScreen() {
   const nfcOverlayOpacity = React.useRef(new RNAnimated.Value(0)).current;
 
   const nfcPayload = 'CGMplus-SecurePass';
-  const qrValue = `${nfcPayload} | ${MOCK_CARD.number}`;
+  const qrValue = `${nfcPayload} | ${membershipCardMock.cardNumber}`;
 
   // ── HCE ──────────────────────────────────────────────────────────────────────
   const startHceBroadcast = async () => {
@@ -143,8 +142,8 @@ export default function HomeScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        
-        <Animated.View 
+
+        <Animated.View
           entering={FadeInUp.delay(100).duration(600)}
           style={styles.header}
         >
@@ -155,7 +154,7 @@ export default function HomeScreen() {
           <Text style={[styles.subtitle, { color: theme.onSurfaceVariant }]}>Welcome to CGMplus</Text>
         </Animated.View>
 
-        <Animated.View 
+        <Animated.View
           entering={FadeInDown.delay(250).duration(600)}
           style={[styles.ticketCard, { backgroundColor: theme.surface }]}
         >
@@ -195,14 +194,14 @@ export default function HomeScreen() {
 
             {!isAuthenticated && (
               <View style={styles.actionGroup}>
-                <TouchableOpacity 
-                  style={[styles.button, { backgroundColor: theme.primary }]} 
+                <TouchableOpacity
+                  style={[styles.button, { backgroundColor: theme.primary }]}
                   onPress={() => router.push('/(auth)/login' as any)}
                 >
                   <Text style={styles.buttonText}>Log In</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.button, styles.buttonOutlined, { borderColor: theme.outline }]} 
+                <TouchableOpacity
+                  style={[styles.button, styles.buttonOutlined, { borderColor: theme.outline }]}
                   onPress={() => router.push('/(auth)/register' as any)}
                 >
                   <Text style={[styles.buttonTextOutlined, { color: theme.primary }]}>Register</Text>
@@ -218,7 +217,7 @@ export default function HomeScreen() {
           <View style={{ gap: 12 }}>
 
             {/* Show QR Pass */}
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={openQr}
               style={[styles.miniCard, { backgroundColor: theme.surface }]}
             >
@@ -248,7 +247,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
 
             {/* My Tix */}
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => router.push('/(tabs)/wallet' as any)}
               style={[styles.miniCard, { backgroundColor: theme.surface }]}
             >
@@ -257,13 +256,15 @@ export default function HomeScreen() {
               </View>
               <View style={styles.miniCardContent}>
                 <Text style={[styles.miniCardText, { color: theme.onSurface }]}>My Tix</Text>
-                <Text style={[styles.miniCardSub, { color: '#A05C00', fontWeight: '700' }]}>{MOCK_LOYALTY.points.toLocaleString()} pts</Text>
+                <Text style={[styles.miniCardSub, { color: '#A05C00', fontWeight: '700' }]}>
+                  {MOCK_LOYALTY.points.toLocaleString()} Tix
+                </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={theme.outline} />
             </TouchableOpacity>
 
             {/* My Tickets */}
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => router.push('/(tabs)/tickets' as any)}
               style={[styles.miniCard, { backgroundColor: theme.surface }]}
             >
@@ -272,13 +273,15 @@ export default function HomeScreen() {
               </View>
               <View style={styles.miniCardContent}>
                 <Text style={[styles.miniCardText, { color: theme.onSurface }]}>My Tickets</Text>
-                <Text style={[styles.miniCardSub, { color: theme.onSurfaceVariant }]}>2 active passes</Text>
+                <Text style={[styles.miniCardSub, { color: theme.onSurfaceVariant }]}>
+                  {MOCK_TICKETS.filter(t => t.status === 'Active').length} active passes
+                </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={theme.outline} />
             </TouchableOpacity>
 
             {/* Trip Planner */}
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => router.push('/(tabs)/map' as any)}
               style={[styles.miniCard, { backgroundColor: theme.surface }]}
             >
@@ -315,7 +318,9 @@ export default function HomeScreen() {
             <MaterialIcons name="contactless" size={48} color={theme.onPrimaryContainer} />
           </View>
           <Text style={[walletStyles.sheetText, { color: isDark ? '#E6E1E5' : '#1C1B1F' }]}>Ready to Scan</Text>
-          <Text style={[walletStyles.sheetCaption, { color: isDark ? '#938F99' : '#79747E' }]}>Hold near the transit reader</Text>
+          <Text style={[walletStyles.sheetCaption, { color: isDark ? '#938F99' : '#79747E' }]}>
+            Hold near the transit reader
+          </Text>
         </View>
       </RNAnimated.View>
 
@@ -343,9 +348,11 @@ export default function HomeScreen() {
             />
           </View>
           <Text style={[styles.qrCardNum, { color: isDark ? '#CAC4D0' : '#49454F' }]}>
-            {MOCK_CARD.number}
+            {membershipCardMock.cardNumber}
           </Text>
-          <Text style={[styles.qrCaption, { color: isDark ? '#938F99' : '#79747E' }]}>Show this code to the attendant</Text>
+          <Text style={[styles.qrCaption, { color: isDark ? '#938F99' : '#79747E' }]}>
+            Show this code to the attendant
+          </Text>
         </View>
       </RNAnimated.View>
     </View>
