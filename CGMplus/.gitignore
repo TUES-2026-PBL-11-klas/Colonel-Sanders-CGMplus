@@ -43,8 +43,5 @@ app-example
 /android
 .vscode/
 
-# mock data
-constants/mock-data.ts
-
 #env files
 .env
