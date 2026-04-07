@@ -14,7 +14,12 @@ class Config:
     OPENAPI_SWAGGER_UI_URL = (
         "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
     )
+
     JWT_SECRET_KEY = getenv("JWT_SECRET")
+
+    SQLALCHEMY_DATABASE_URI = getenv("DB_URL")
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+
     API_SPEC_OPTIONS = {
         "components": {
             "securitySchemes": {
