@@ -1,6 +1,5 @@
-import { Animated, Dimensions, StyleSheet } from 'react-native';
+import { Animated, StyleSheet } from 'react-native';
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
 const SHEET_TOP_PADDING = 20;
 const SHEET_BOTTOM_PADDING = 40;
 

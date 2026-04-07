@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   Animated,
   PanResponder,
@@ -15,14 +15,13 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Ionicons } from '@expo/vector-icons';
 import { HCESession, NFCTagType4NDEFContentType, NFCTagType4 } from 'react-native-hce';
 import { useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { useCallback } from 'react';
 import QRCodeStyled from 'react-native-qrcode-styled';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 
-import { getOverlayStyle, SHEET_HEIGHT, walletStyles} from '../../components/wallet-styles';
+import { getOverlayStyle, SHEET_HEIGHT, walletStyles} from '@/components/wallet-styles';
 
 import { MOCK_CARD, MOCK_LOYALTY } from '@/constants/mock-data';
 
@@ -49,7 +48,6 @@ export default function WalletScreen() {
 
   // Sheet backgrounds: lighter undertone so they float above page bg
   const sheetBg = isDark ? '#26252B' : '#F2F5F9';
-  const borderColor = theme.outline || '#d9dde3';
 
   // Progress for Tix
   const tixProgress = Math.min(MOCK_LOYALTY.points / MOCK_LOYALTY.nextTierAt, 1);

@@ -8,14 +8,9 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { Animated as RNAnimated, PanResponder, type PanResponderGestureState, Pressable } from 'react-native';
 import QRCodeStyled from 'react-native-qrcode-styled';
 import { HCESession, NFCTagType4NDEFContentType, NFCTagType4 } from 'react-native-hce';
-import {
-  getOverlayStyle,
-  getTopSheetStyle,
-  SHEET_HEIGHT,
-  walletStyles,
-} from '../../components/wallet-styles';
+import { getOverlayStyle, SHEET_HEIGHT, walletStyles} from '../../components/wallet-styles';
 
-import { membershipCardMock, MOCK_TICKETS, MOCK_LOYALTY } from '@/constants/mock-data';
+import { MOCK_CARD, MOCK_TICKETS, MOCK_LOYALTY } from '@/constants/mock-data';
 
 const QR_HEIGHT = 540;
 
@@ -41,7 +36,7 @@ export default function HomeScreen() {
   const nfcOverlayOpacity = React.useRef(new RNAnimated.Value(0)).current;
 
   const nfcPayload = 'CGMplus-SecurePass';
-  const qrValue = `${nfcPayload} | ${membershipCardMock.cardNumber}`;
+  const qrValue = `${nfcPayload} | ${MOCK_CARD.number}`;
 
   // ── HCE ──────────────────────────────────────────────────────────────────────
   const startHceBroadcast = async () => {
@@ -348,7 +343,7 @@ export default function HomeScreen() {
             />
           </View>
           <Text style={[styles.qrCardNum, { color: isDark ? '#CAC4D0' : '#49454F' }]}>
-            {membershipCardMock.cardNumber}
+            {MOCK_CARD.number}
           </Text>
           <Text style={[styles.qrCaption, { color: isDark ? '#938F99' : '#79747E' }]}>
             Show this code to the attendant
