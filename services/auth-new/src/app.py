@@ -38,8 +38,8 @@ def create_app(config_name: str | None = None):
 
     from src import models  # noqa: F401
 
-    api.register_blueprint(AuthBlueprint, url_prefix="/auth")
+    api.register_blueprint(AuthBlueprint, url_prefix="/api/v1/auth")
     api.register_blueprint(RootBlueprint)
-    api.register_blueprint(UserBlueprint)
+    api.register_blueprint(UserBlueprint, url_prefix="/api/v1/users")
 
     return app
