@@ -8,4 +8,4 @@ spec:
     spec:
       containers:
         - name: auth
-          image: docker.io/vilibalchev5/auth-new:latest
+          image: docker.io/vilibalchev5/auth-new:d683c3a0e78c24b43f523a99a87c05459d671b06
