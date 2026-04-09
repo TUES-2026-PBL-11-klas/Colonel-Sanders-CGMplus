@@ -88,6 +88,11 @@ Argo CD applications:
 - Prod app manifest: [gitops/environments/prod/CGMplus-prod.yaml](gitops/environments/prod/CGMplus-prod.yaml)
 	: tracks `main`
 
+Overlay paths:
+
+- Dev overlay: `gitops/environments/dev/manifests` (includes Vault-backed external secrets)
+- Prod overlay: `gitops/environments/prod/manifests` (includes Azure Key Vault-backed external secrets)
+
 ## Cluster Dev/Test Flow (minikube + Cloudflare)
 
 1. Push code to `development`.
@@ -107,6 +112,34 @@ Argo CD applications:
 
 - Dev/test: Vault + External Secrets in minikube cluster.
 - Production: Azure-managed secrets (for example Key Vault) is the target model.
+
+Current production backend manifests:
+
+- `gitops/azure-secrets/clustersecretstore-azurekv.yaml`
+- `gitops/azure-secrets/externalsecret-auth.yaml`
+
+## Terraform By Environment
+
+Use environment-specific tfvars examples:
+
+- `terraform/dev.tfvars.example` (Vault enabled)
+- `terraform/prod.tfvars.example` (Vault disabled)
+
+Apply to production AKS after `az aks get-credentials`:
+
+```bash
+cd terraform
+cp prod.tfvars.example prod.tfvars
+terraform init
+terraform plan -var-file=prod.tfvars
+terraform apply -var-file=prod.tfvars
+```
+
+Then apply production Argo CD app:
+
+```bash
+kubectl apply -f gitops/environments/prod/CGMplus-prod.yaml -n argocd
+```
 
 Current ExternalSecret manifests:
 

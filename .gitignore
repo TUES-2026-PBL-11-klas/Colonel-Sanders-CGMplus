@@ -1,0 +1,8 @@
+# Terraform local artifacts
+terraform/.terraform/
+terraform/*.tfvars
+terraform/*.tfvars.json
+
+# Local env files
+.env
+.env.*

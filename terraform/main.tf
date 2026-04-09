@@ -1,12 +1,13 @@
 locals {
-  namespaces = toset([
+  base_namespaces = [
     "argocd",
     "external-secrets",
     "services",
     "ingress-nginx",
     "monitoring",
-    "vault",
-  ])
+  ]
+
+  namespaces = var.enable_vault ? toset(concat(local.base_namespaces, ["vault"])) : toset(local.base_namespaces)
 
   addons = {
     ingress-nginx = {
