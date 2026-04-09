@@ -23,34 +23,50 @@ jobs:
             dockerfile: services/gtfs/Dockerfile
             context: services/gtfs
             image_name: gtfs
-            manifest_path: gitops/services/gtfs/deployment.yaml
           - service_name: auth-new
             dockerfile: services/auth-new/Dockerfile
             context: services/auth-new
             image_name: auth-new
             manifest_path: gitops/services/auth/deployment.yaml
 
-    env:
-      REGISTRY: docker.io
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set lowercase image name
+      - name: Select target environment
         run: |
-          IMAGE_NAME="${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image_name }}"
-          echo "IMAGE_NAME_LC=$(echo ${IMAGE_NAME} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "TARGET_ENV=prod" >> $GITHUB_ENV
+            echo "REGISTRY=${{ secrets.ACR_LOGIN_SERVER }}" >> $GITHUB_ENV
+          else
+            echo "TARGET_ENV=dev" >> $GITHUB_ENV
+            echo "REGISTRY=docker.io" >> $GITHUB_ENV
+          fi
+
+      - name: Set image name
+        run: |
+          if [ "$TARGET_ENV" = "prod" ]; then
+            IMAGE_NAME="${REGISTRY}/${{ matrix.image_name }}"
+          else
+            DOCKERHUB_USER_LC=$(echo "${{ secrets.DOCKERHUB_USERNAME }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE_NAME="${REGISTRY}/${DOCKERHUB_USER_LC}/${{ matrix.image_name }}"
+          fi
+          echo "IMAGE_NAME=$(echo ${IMAGE_NAME} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
       - name: Build Docker image
         run: |
-          docker build -t ${REGISTRY}/${IMAGE_NAME_LC}:${{ github.sha }} -f ${{ matrix.dockerfile }} ${{ matrix.context }}
+          docker build -t ${IMAGE_NAME}:${{ github.sha }} -f ${{ matrix.dockerfile }} ${{ matrix.context }}
+
+      - name: Login to ACR
+        if: github.ref_name == 'main'
+        run: echo "${{ secrets.ACR_PASSWORD }}" | docker login ${{ secrets.ACR_LOGIN_SERVER }} -u "${{ secrets.ACR_USERNAME }}" --password-stdin
 
       - name: Login to Docker Hub
+        if: github.ref_name != 'main'
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login ${REGISTRY} -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
       - name: Push image
-        run: docker push ${REGISTRY}/${IMAGE_NAME_LC}:${{ github.sha }}
+        run: docker push ${IMAGE_NAME}:${{ github.sha }}
 
       - name: Notify Discord
         if: always()
@@ -67,7 +83,7 @@ jobs:
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
           curl -sS -H "Content-Type: application/json" \
-            -d "{\"content\":\"[Service Build] status: ${STATUS} | branch: ${BRANCH} | service: ${{ matrix.service_name }} | image: ${REGISTRY}/${IMAGE_NAME_LC}:${{ github.sha }} | ${RUN_URL}\"}" \
+            -d "{\"content\":\"[Service Build] status: ${STATUS} | branch: ${BRANCH} | service: ${{ matrix.service_name }} | image: ${IMAGE_NAME}:${{ github.sha }} | ${RUN_URL}\"}" \
             "$DISCORD_WEBHOOK_URL"
 
   update-gitops-manifests:
@@ -78,24 +94,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Update image tags in GitOps manifests
+      - name: Update image tags in environment overlay
         run: |
-          DOCKERHUB_USER_LC=$(echo "${{ secrets.DOCKERHUB_USERNAME }}" | tr '[:upper:]' '[:lower:]')
-
-          sed -i "s|image: .*[/]gtfs:.*|image: docker.io/${DOCKERHUB_USER_LC}/gtfs:${{ github.sha }}|" gitops/services/gtfs/deployment.yaml
-          sed -i "s|image: .*[/]auth-new:.*|image: docker.io/${DOCKERHUB_USER_LC}/auth-new:${{ github.sha }}|" gitops/services/auth/deployment.yaml
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            ACR_LC=$(echo "${{ secrets.ACR_LOGIN_SERVER }}" | tr '[:upper:]' '[:lower:]')
+            sed -i "s|image: .*auth-new:.*|image: ${ACR_LC}/auth-new:${{ github.sha }}|" gitops/environments/prod/manifests/auth-image-patch.yaml
+            sed -i "s|image: .*gtfs:.*|image: ${ACR_LC}/gtfs:${{ github.sha }}|" gitops/environments/prod/manifests/gtfs-image-patch.yaml
+          else
+            DOCKERHUB_USER_LC=$(echo "${{ secrets.DOCKERHUB_USERNAME }}" | tr '[:upper:]' '[:lower:]')
+            sed -i "s|image: .*auth-new:.*|image: docker.io/${DOCKERHUB_USER_LC}/auth-new:${{ github.sha }}|" gitops/environments/dev/manifests/auth-image-patch.yaml
+            sed -i "s|image: .*gtfs:.*|image: docker.io/${DOCKERHUB_USER_LC}/gtfs:${{ github.sha }}|" gitops/environments/dev/manifests/gtfs-image-patch.yaml
+          fi
 
       - name: Commit and push manifest changes
         run: |
           git config user.name "ci"
           git config user.email "ci@bot.com"
 
-          git add gitops/services/gtfs/deployment.yaml gitops/services/auth/deployment.yaml
+            git add gitops/environments/dev/manifests/auth-image-patch.yaml \
+              gitops/environments/dev/manifests/gtfs-image-patch.yaml \
+              gitops/environments/prod/manifests/auth-image-patch.yaml \
+              gitops/environments/prod/manifests/gtfs-image-patch.yaml
 
           if git diff --cached --quiet; then
             echo "No GitOps manifest changes to commit"
           else
-            git commit -m "chore(gitops): update service images to ${{ github.sha }}"
+            git commit -m "chore(gitops): update ${{ github.ref_name }} image tags to ${{ github.sha }}"
             git push origin ${{ github.ref_name }}
           fi
 
