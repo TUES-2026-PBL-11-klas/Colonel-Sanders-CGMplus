@@ -1,6 +1,7 @@
 from flask_smorest import Blueprint
 from flask.views import MethodView
 from flask import jsonify
+from src.schemas.internalSchema import CreateProfileSchema
 
 
 blp = Blueprint("internal", "internal", url_prefix="/internal")
@@ -9,4 +10,11 @@ blp = Blueprint("internal", "internal", url_prefix="/internal")
 class Points(MethodView):
     def patch(self, account_id):
         account_id = account_id
+        return jsonify({})
+
+
+@blp.route("/profile")
+class CreateProfile(MethodView):
+    @blp.arguments(CreateProfileSchema)
+    def post(self):
         return jsonify({})
