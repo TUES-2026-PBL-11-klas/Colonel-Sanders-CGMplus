@@ -7,4 +7,7 @@ class ProfileSchema(Schema):
 
 
 class CardSchema(Schema):
-    card = fields.Str(len=16)
+    nfc_id = fields.String()
+    active = fields.Boolean()
+    disabled = fields.Boolean()
+    expiry_date = fields.DateTime()

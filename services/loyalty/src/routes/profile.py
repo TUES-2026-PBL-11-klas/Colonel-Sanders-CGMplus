@@ -36,4 +36,9 @@ class Card(MethodView):
         if not card:
             return jsonify({'error': 'Card not found'}), 404
 
-        return jsonify({'nfc_id': card.nfc_id})
+        return jsonify({
+            'nfc_id': card.nfc_id,
+            'active': card.active,
+            'disabled': card.disabled,
+            'expiry_date': card.expiry_date.isoformat()
+        })
