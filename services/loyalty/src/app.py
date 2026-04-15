@@ -6,6 +6,7 @@ from src.extensions import (
     migrate
 )
 from src.models.profile import Profile  # noqa: F401
+from src.models.card import Card  # noqa: F401
 from src.routes.profile import blp as PointBlueprint
 from src.routes.internal import blp as InternalBlueprint
 
