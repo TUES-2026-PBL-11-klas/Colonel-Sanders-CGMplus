@@ -11,8 +11,13 @@ blp = Blueprint("internal", "internal", url_prefix="/internal")
 @blp.route("/<string:account_id>/points")
 class Points(MethodView):
     def patch(self, account_id):
-        account_id = account_id
-        return jsonify({})
+        resp = ProfileService.update_points(account_id)
+        if resp is None:
+            resp = False
+
+        return jsonify({
+            'status': resp
+        })
 
 
 @blp.route("/profile")
