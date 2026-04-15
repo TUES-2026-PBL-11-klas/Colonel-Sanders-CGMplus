@@ -4,6 +4,8 @@ import { StatusBar } from 'expo-status-bar';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
+import { AuthProvider, useAuth } from '../context/auth-context';
+import { Colors } from '../constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useGtfsData } from '@/hooks/use-gtfs-data';
 
