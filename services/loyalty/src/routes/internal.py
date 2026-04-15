@@ -2,6 +2,8 @@ from flask_smorest import Blueprint
 from flask.views import MethodView
 from flask import jsonify
 from src.schemas.internalSchema import CreateProfileSchema
+from src.services.profile import ProfileService
+from src.services.card import CardService
 
 
 blp = Blueprint("internal", "internal", url_prefix="/internal")
@@ -16,5 +18,12 @@ class Points(MethodView):
 @blp.route("/profile")
 class CreateProfile(MethodView):
     @blp.arguments(CreateProfileSchema)
-    def post(self):
-        return jsonify({})
+    def post(self, args):
+        profile = ProfileService.create_profile(args['uuid'])
+        card = CardService.create_card(args['uuid'])
+
+        return jsonify({
+            'id': str(profile.id),
+            'balance': profile.balance,
+            'rank': profile.rank
+        }), 201
