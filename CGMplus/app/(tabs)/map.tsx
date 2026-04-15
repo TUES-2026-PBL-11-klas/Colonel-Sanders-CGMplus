@@ -300,8 +300,7 @@ export default function MapScreen() {
         originWhitelist={['*']}
         source={{ html: LEAFLET_HTML }}
         style={styles.map}
-        javaScriptEnabled
-        gestureEnabled={true}
+        javaScriptEnabled={true}
         scrollEnabled={false}
         scalesPageToFit={false}
         nestedScrollEnabled={false}

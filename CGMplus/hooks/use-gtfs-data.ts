@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 
-const GTFS_BASE = `http://172.26.128.114:5000/api/v1`;
+const GTFS_BASE = `http://192.168.1.52:5001/api/v1`;
 const VEHICLE_POLL_MS = 10000;
 
 // Global state to store fetched data
@@ -11,7 +11,7 @@ let globalTrips: any[] = [];
 let globalSubscribers: Set<(type: string, data: any[]) => void> = new Set();
 
 export function useGtfsData() {
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const initRef = useRef(false);
 
   const fetchStops = useCallback(async () => {
