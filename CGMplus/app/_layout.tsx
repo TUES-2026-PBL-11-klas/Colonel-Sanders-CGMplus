@@ -5,8 +5,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { AuthProvider, useAuth } from '../context/auth-context';
-import { Colors } from '../constants/theme';
+import { useGtfsData } from '@/hooks/use-gtfs-data';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -56,6 +55,7 @@ function AppShell() {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  useGtfsData(); // Initialize global GTFS data fetching
 
   return (
     <SafeAreaProvider>
