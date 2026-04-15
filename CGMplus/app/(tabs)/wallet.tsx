@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   Animated,
   PanResponder,
+  Platform,
   Pressable,
   View,
   BackHandler,

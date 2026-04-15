@@ -1,13 +1,14 @@
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { Platform } from 'react-native';
+import { Redirect } from 'expo-router';
 
-//WIP
-function AdminPanel() {
-    return (
-        <ThemedView>
-            <ThemedText>Hello</ThemedText>
-        </ThemedView>
-    );
+// Hard block — should never be reached on native, but just in case
+function AdminPage() {
+  if (Platform.OS !== 'web') {
+    return <Redirect href="/" />;
+  } else {
+    const { default: AdminApp } = require('@/admin/adminApp');
+    return <AdminApp />;
+  }
 }
 
-export default AdminPanel;
+export default AdminPage;

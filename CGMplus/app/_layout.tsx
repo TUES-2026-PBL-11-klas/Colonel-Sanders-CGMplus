@@ -4,10 +4,10 @@ import { StatusBar } from 'expo-status-bar';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth } from '../context/auth-context';
 import { Colors } from '../constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useGtfsData } from '@/hooks/use-gtfs-data';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -44,7 +44,7 @@ function AppShell() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-        <Stack.Screen name="admin" options={{ title: 'Admin Panel' }} />
+        <Stack.Screen name="admin" options={{ headerShown: false }} />
       </Stack>
       <StatusBar 
         style={colorScheme === 'dark' ? 'light' : 'dark'} 
@@ -57,6 +57,7 @@ function AppShell() {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  useGtfsData(); // Initialize global GTFS data fetching
 
   return (
     <SafeAreaProvider>
@@ -68,4 +69,3 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
-
