@@ -6,4 +6,26 @@ resources:
   - database/auth-postgres.yaml
   - services/gtfs
   - services/auth
-  - vault
+  - azure-secrets
+
+patches:
+  - path: environments/prod/manifests/auth-image-patch.yaml
+    target:
+      kind: Deployment
+      name: auth
+      namespace: services
+  - path: environments/prod/manifests/gtfs-image-patch.yaml
+    target:
+      kind: Deployment
+      name: gtfs
+      namespace: services
+  - path: environments/prod/manifests/auth-acr-pullsecret-patch.yaml
+    target:
+      kind: Deployment
+      name: auth
+      namespace: services
+  - path: environments/prod/manifests/gtfs-acr-pullsecret-patch.yaml
+    target:
+      kind: Deployment
+      name: gtfs
+      namespace: services
