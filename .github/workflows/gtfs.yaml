@@ -1,0 +1,91 @@
+name: GTFS CI
+
+on:
+  push:
+    branches: ["main", "development", "svc/**", "feature/DevOpsTest"]
+    paths:
+      - services/gtfs/**
+      - .github/workflows/gtfs.yaml
+  pull_request:
+    branches: ["main", "development"]
+    paths:
+      - services/gtfs/**
+      - .github/workflows/gtfs.yaml
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/gtfs
+
+    env:
+      PYTHON_VERSION: "3.12"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/gtfs/requirements.txt', 'services/gtfs/requirements-dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Lint (fail on error)
+        run: |
+          flake8 src
+
+      - name: Run tests with coverage
+        run: |
+          pytest --cov=src --cov-report=term --cov-report=xml
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+      - name: Smoke test (app boot)
+        run: |
+          python run.py &
+          for i in {1..10}; do
+            curl -sf http://localhost:5000/health/ && break
+            echo "Waiting for app... attempt $i"
+            sleep 2
+          done
+
+      - name: Notify Discord
+        if: always()
+        working-directory: .
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "DISCORD_WEBHOOK_URL is not set; skipping notification"
+            exit 0
+          fi
+
+          STATUS="${{ job.status }}"
+          BRANCH="${{ github.ref_name }}"
+          ACTOR="${{ github.actor }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          curl -sS -H "Content-Type: application/json" \
+            -d "{\"content\":\"[GTFS CI] status: ${STATUS} | branch: ${BRANCH} | actor: ${ACTOR} | ${RUN_URL}\"}" \
+            "$DISCORD_WEBHOOK_URL"
