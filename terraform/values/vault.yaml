@@ -1,0 +1,20 @@
+server:
+  dataStorage:
+    size: 1Gi
+  dev:
+    enabled: true
+    devRootToken: root
+  standalone:
+    enabled: false
+  ha:
+    enabled: false
+
+injector:
+  enabled: true
+
+ui:
+  enabled: true
+
+# Dev mode does not persist; acceptable for dev/test
+serviceAccount:
+  create: true

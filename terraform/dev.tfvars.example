@@ -1,0 +1,7 @@
+kubeconfig_path     = "~/.kube/config"
+discord_webhook_url = "https://discord.com/api/webhooks/your-webhook-id/your-webhook-token"
+
+enable_argocd           = true
+enable_vault            = true
+enable_external_secrets = true
+enable_observability    = true

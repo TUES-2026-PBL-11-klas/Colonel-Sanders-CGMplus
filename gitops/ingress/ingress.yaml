@@ -1,0 +1,55 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gtfs-ingress
+  namespace: services
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /auth
+            pathType: Prefix
+            backend:
+              service:
+                name: auth-service
+                port:
+                  number: 5000
+          - path: /users
+            pathType: Prefix
+            backend:
+              service:
+                name: auth-service
+                port:
+                  number: 5000
+          - path: /api/v1/realtime
+            pathType: Prefix
+            backend:
+              service:
+                name: gtfs-service
+                port:
+                  number: 5000
+          - path: /api/v1/static
+            pathType: Prefix
+            backend:
+              service:
+                name: gtfs-service
+                port:
+                  number: 5000
+          - path: /status
+            pathType: Prefix
+            backend:
+              service:
+                name: gtfs-service
+                port:
+                  number: 5000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gtfs-service
+                port:
+                  number: 5000

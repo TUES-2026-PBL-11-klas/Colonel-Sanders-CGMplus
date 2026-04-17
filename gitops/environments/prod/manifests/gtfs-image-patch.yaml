@@ -1,0 +1,11 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gtfs
+  namespace: services
+spec:
+  template:
+    spec:
+      containers:
+        - name: gtfs
+          image: cgmplusprod.azurecr.io/gtfs:96aa34806345d1104ac354fd7ca998450256a340

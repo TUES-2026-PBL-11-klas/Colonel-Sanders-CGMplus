@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../../ingress/ingress.yaml
+  - ../../../database/auth-postgres.yaml
+  - ../../../services/gtfs
+  - ../../../services/auth
+  - ../../../azure-secrets
+
+patchesStrategicMerge:
+  - auth-image-patch.yaml
+  - gtfs-image-patch.yaml
+  - auth-acr-pullsecret-patch.yaml
+  - gtfs-acr-pullsecret-patch.yaml

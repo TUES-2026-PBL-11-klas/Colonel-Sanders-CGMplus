@@ -1,33 +1,149 @@
-# Colonel-Sanders-CGMplus
-A better app for the public transportaion in Sofia, Sofia-grad, Bulgaria
-## Development environment 
+# Colonel-Sanders-CGMplus Local Dev
 
-### Prerequisites
-- Docker
-- Minikube
-- Kubectl
-- Python 3.9+ (for pre-commit)
+This repository is currently configured for local development with only core runtime components:
 
-### Pre-commit hooks
+- GTFS service
+- Auth service
+- Auth Postgres database
+- NGINX ingress controller
 
-This repository uses `pre-commit` hooks to run lightweight checks before each commit.
+No local observability stack is included in this mode (no Prometheus, Grafana, Loki, or Promtail).
 
-#### One-time setup
+## Local Architecture
+
+- [docker-compose.yaml](docker-compose.yaml): starts the local stack
+- [ops/local/nginx/nginx.conf](ops/local/nginx/nginx.conf): ingress routing rules
+- [services/gtfs](services/gtfs): GTFS service source and Docker build
+- [services/auth-new](services/auth-new): Auth service source and Docker build
+
+## Ports
+
+- `8080` -> ingress entrypoint (all API traffic should go through this)
+- `5432` -> used internally by `auth-db` container (not published to host)
+- `5000` -> used internally by `gtfs` and `auth` containers (not published to host)
+
+Only `8080` is exposed on the host machine.
+
+## Local Routes Through Ingress
+
+All requests should go to `http://localhost:8080`.
+
+- `/auth/*` -> Auth service
+- `/users/*` -> Auth service
+- `/health/auth` -> Auth health check (`/health`)
+- `/api/v1/*` -> GTFS service
+- `/health/` -> GTFS health check
+- `/` -> GTFS root/docs route
+
+## Environment Variables
+
+Create a root `.env` file (not committed) with at least:
+
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+- `POSTGRES_DB`
+- `JWT_SECRET`
+
+Example values:
+
+```env
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=auth_db
+JWT_SECRET=local-dev-jwt-secret
+```
+
+## Run Local Dev
 
 ```bash
-pip install pre-commit
-pre-commit install
+docker compose up --build -d
 ```
 
-#### Run hooks manually
+## Verify
+
+- `http://localhost:8080/health/` should return GTFS health
+- `http://localhost:8080/health/auth` should return Auth health
+
+## Stop
 
 ```bash
-pre-commit run --all-files
+docker compose down
 ```
 
-Hook configuration is defined in `.pre-commit-config.yaml`.
+To also remove the auth database volume:
 
-#### Start the development cluster
+```bash
+docker compose down -v
 ```
-minikube start --driver=docker
+
+## GitOps Branch Model
+
+- `development`: dev/test environment branch (minikube cluster on hosted PC)
+- `main`: production environment branch (Azure target)
+
+Argo CD applications:
+
+- Dev app manifest: [gitops/environments/dev/CGMplus-dev.yaml](gitops/environments/dev/CGMplus-dev.yaml)
+	: tracks `development`
+- Prod app manifest: [gitops/environments/prod/CGMplus-prod.yaml](gitops/environments/prod/CGMplus-prod.yaml)
+	: tracks `main`
+
+Overlay paths:
+
+- Dev overlay: `gitops/environments/dev/manifests` (includes Vault-backed external secrets)
+- Prod overlay: `gitops/environments/prod/manifests` (includes Azure Key Vault-backed external secrets)
+
+## Cluster Dev/Test Flow (minikube + Cloudflare)
+
+1. Push code to `development`.
+2. CI runs service tests from [GTFS CI workflow](.github/workflows/gtfs.yaml) and [AUTH CI workflow](.github/workflows/auth.yml).
+3. Build pipeline [deploy workflow](.github/workflows/deploy.yml):
+	 - builds/pushes `docker.io/<dockerhub-username>/gtfs:<sha>`
+	 - builds/pushes `docker.io/<dockerhub-username>/auth-new:<sha>`
+
+	 Required GitHub repository secrets for image publish:
+	 - `DOCKERHUB_USERNAME`
+	 - `DOCKERHUB_TOKEN` (Docker Hub access token)
+	 - updates GitOps deployment image tags in the same branch
+4. Argo CD in test cluster detects GitOps manifest change in `development` and syncs.
+5. Cloudflare Tunnel exposes ingress host publicly for testing.
+
+## Secrets Model
+
+- Dev/test: Vault + External Secrets in minikube cluster.
+- Production: Azure-managed secrets (for example Key Vault) is the target model.
+
+Current production backend manifests:
+
+- `gitops/azure-secrets/clustersecretstore-azurekv.yaml`
+- `gitops/azure-secrets/externalsecret-auth.yaml`
+
+## Terraform By Environment
+
+Use environment-specific tfvars examples:
+
+- `terraform/dev.tfvars.example` (Vault enabled)
+- `terraform/prod.tfvars.example` (Vault disabled)
+
+Apply to production AKS after `az aks get-credentials`:
+
+```bash
+cd terraform
+cp prod.tfvars.example prod.tfvars
+terraform init
+terraform plan -var-file=prod.tfvars
+terraform apply -var-file=prod.tfvars
 ```
+
+Then apply production Argo CD app:
+
+```bash
+kubectl apply -f gitops/environments/prod/CGMplus-prod.yaml -n argocd
+```
+
+Current ExternalSecret manifests:
+
+- GTFS: [gitops/vault/externalsecret-gtfs.yaml](gitops/vault/externalsecret-gtfs.yaml)
+- Auth: [gitops/vault/externalsecret-auth.yaml](gitops/vault/externalsecret-auth.yaml)
+
+For detailed minikube bootstrap and Cloudflare steps, see [MINIKUBE-SETUP.md](MINIKUBE-SETUP.md).
