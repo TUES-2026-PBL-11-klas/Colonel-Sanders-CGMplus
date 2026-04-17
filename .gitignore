@@ -2,6 +2,11 @@
 terraform/.terraform/
 terraform/*.tfvars
 terraform/*.tfvars.json
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/crash.log
+terraform/crash.*.log
+terraform/*.tfplan
 
 # Local env files
 .env
