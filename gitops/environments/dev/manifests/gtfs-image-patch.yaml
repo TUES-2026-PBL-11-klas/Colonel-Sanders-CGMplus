@@ -8,4 +8,4 @@ spec:
     spec:
       containers:
         - name: gtfs
-          image: docker.io/vilibalchev5/gtfs:d683c3a0e78c24b43f523a99a87c05459d671b06
+          image: docker.io/vilibalchev5/gtfs:b0be203e2402c23e11ce2cc10c24115fa1a9a55a
