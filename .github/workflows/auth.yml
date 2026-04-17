@@ -23,13 +23,13 @@ jobs:
       postgres:
         image: postgres:17
         env:
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ci_user
+          POSTGRES_PASSWORD: ci_password
+          POSTGRES_DB: ci_auth_db
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U postgres"
+          --health-cmd="pg_isready -U ci_user -d ci_auth_db"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -37,10 +37,10 @@ jobs:
     env:
       PYTHON_VERSION: "3.13"
       PYTHONPATH: ${{ github.workspace }}/services/auth-new
-      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-      SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/${{ secrets.POSTGRES_DB }}
+      POSTGRES_USER: ci_user
+      POSTGRES_PASSWORD: ci_password
+      POSTGRES_DB: ci_auth_db
+      SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://ci_user:ci_password@localhost:5432/ci_auth_db
       POSTGRES_PORT: 5432
       FLASK_ENV: testing
       JWT_SECRET: test-jwt-secret
@@ -59,7 +59,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/auth-new/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
@@ -95,6 +95,7 @@ jobs:
 
       - name: Notify Discord
         if: always()
+        working-directory: .
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
