@@ -125,7 +125,7 @@ class TestCreateAppExtensionInit:
             create_app("testing")
 
         api_mock = _patch_extensions["api"]
-        api_mock.register_blueprint.assert_any_call(AuthBlueprint, url_prefix="/auth")
+        api_mock.register_blueprint.assert_any_call(AuthBlueprint, url_prefix="/api/v1/auth")
 
     def test_root_and_user_blueprints_registered(self, _patch_extensions):
         with patch("src.app.get_config_name", return_value="testing"), \
@@ -136,7 +136,7 @@ class TestCreateAppExtensionInit:
 
         api_mock = _patch_extensions["api"]
         api_mock.register_blueprint.assert_any_call(RootBlueprint)
-        api_mock.register_blueprint.assert_any_call(UserBlueprint)
+        api_mock.register_blueprint.assert_any_call(UserBlueprint, url_prefix="/api/v1/users")
 
 
 class TestCreateAppProductionGuard:
