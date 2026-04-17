@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - clustersecretstore-azurekv.yaml
   - externalsecret-auth.yaml
+  - externalsecret-grafana.yaml

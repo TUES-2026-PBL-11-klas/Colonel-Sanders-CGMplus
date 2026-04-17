@@ -1,6 +1,9 @@
 grafana:
   enabled: true
-  adminPassword: admin
+  admin:
+    existingSecret: grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
   ingress:
     enabled: false
   sidecar:
