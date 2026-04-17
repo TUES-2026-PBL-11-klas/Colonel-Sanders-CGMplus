@@ -9,7 +9,7 @@ from uuid import UUID
 blp = Blueprint("profile", "profile", url_prefix="/profile")
 
 
-@blp.route("/")
+@blp.route("/me")
 class Profile(MethodView):
     @blp.response(200, ProfileSchema)
     @blp.doc(security=[{"BearerAuth": []}])
