@@ -1,0 +1,70 @@
+grafana:
+  enabled: true
+  admin:
+    existingSecret: grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
+  ingress:
+    enabled: false
+  sidecar:
+    datasources:
+      defaultDatasourceEnabled: false
+  persistence:
+    enabled: false
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          url: http://kube-prometheus-stack-prometheus:9090
+          isDefault: true
+        - name: Loki
+          type: loki
+          url: http://loki:3100
+
+prometheus:
+  enabled: true
+  ingress:
+    enabled: false
+  prometheusSpec:
+    retention: 3d
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+alertmanager:
+  enabled: true
+  ingress:
+    enabled: false
+  config:
+    global: {}
+    route:
+      receiver: %{ if discord_webhook_url != "" }discord%{ else }default%{ endif }
+      group_by:
+        - alertname
+        - namespace
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 2h
+    receivers:
+      - name: default
+%{ if discord_webhook_url != "" ~}
+      - name: discord
+        webhook_configs:
+          - url: "${discord_webhook_url}"
+            send_resolved: true
+%{ endif ~}
+
+prometheusOperator:
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
