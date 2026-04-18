@@ -1,5 +1,8 @@
 controller:
   service:
-    type: ClusterIP
+    type: LoadBalancer
+    annotations:
+      service.beta.kubernetes.io/azure-pip-name: cgmplus-ingress-pip
+      service.beta.kubernetes.io/azure-load-balancer-resource-group: MC_cgmplus-prod-rg_cgmplus-prod-aks_polandcentral
   metrics:
     enabled: true

@@ -11,14 +11,14 @@ spec:
   rules:
     - http:
         paths:
-          - path: /auth
+          - path: /api/v1/auth
             pathType: Prefix
             backend:
               service:
                 name: auth-service
                 port:
                   number: 5000
-          - path: /users
+          - path: /api/v1/users
             pathType: Prefix
             backend:
               service:
@@ -33,20 +33,6 @@ spec:
                 port:
                   number: 5000
           - path: /api/v1/static
-            pathType: Prefix
-            backend:
-              service:
-                name: gtfs-service
-                port:
-                  number: 5000
-          - path: /status
-            pathType: Prefix
-            backend:
-              service:
-                name: gtfs-service
-                port:
-                  number: 5000
-          - path: /
             pathType: Prefix
             backend:
               service:
