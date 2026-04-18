@@ -1,0 +1,114 @@
+name: LOYALTY CI
+
+on:
+  push:
+    branches: ["main", "development", "svc/**"]
+    paths:
+      - services/loyalty/**
+      - .github/workflows/loyalty.yml
+  pull_request:
+    branches: ["main", "development"]
+    paths:
+      - services/loyalty/**
+      - .github/workflows/loyalty.yml
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/loyalty
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ci_user
+          POSTGRES_PASSWORD: ci_password
+          POSTGRES_DB: ci_loyalty_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U ci_user -d ci_loyalty_db"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      PYTHON_VERSION: "3.13"
+      PYTHONPATH: ${{ github.workspace }}/services/loyalty
+      POSTGRES_USER: ci_user
+      POSTGRES_PASSWORD: ci_password
+      POSTGRES_DB: ci_loyalty_db
+      DB_URL: postgresql+psycopg2://ci_user:ci_password@localhost:5432/ci_loyalty_db
+      POSTGRES_PORT: 5432
+      FLASK_ENV: testing
+      JWT_SECRET: test-jwt-secret
+      SQLALCHEMY_TRACK_MODIFICATIONS: "False"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/loyalty/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8 pytest-cov
+
+      - name: Lint (fail on error)
+        run: |
+          flake8 src --max-line-length=100 --extend-ignore=E124,E128,E301,E302,E501,F401
+
+      - name: Run tests with coverage
+        run: |
+          pytest --cov=src --cov-report=term --cov-report=xml
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: loyalty-coverage-report
+          path: coverage.xml
+
+      - name: Smoke test (app boot)
+        run: |
+          python run.py &
+          for i in {1..10}; do
+            curl -sf http://localhost:5000/health && break
+            echo "Waiting for app... attempt $i"
+            sleep 2
+          done
+
+      - name: Notify Discord
+        if: always()
+        working-directory: .
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "DISCORD_WEBHOOK_URL is not set; skipping notification"
+            exit 0
+          fi
+
+          STATUS="${{ job.status }}"
+          BRANCH="${{ github.ref_name }}"
+          ACTOR="${{ github.actor }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          curl -sS -H "Content-Type: application/json" \
+            -d "{\"content\":\"[LOYALTY CI] status: ${STATUS} | branch: ${BRANCH} | actor: ${ACTOR} | ${RUN_URL}\"}" \
+            "$DISCORD_WEBHOOK_URL"
