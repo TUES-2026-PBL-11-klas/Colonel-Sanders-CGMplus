@@ -17,6 +17,7 @@ def get_config_name() -> str:
 def apply_runtime_config(app: Flask, name: str) -> None:
     app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET")
     app.config["DEBUG_METRICS"] = os.getenv("DEBUG_METRICS", "0") == "1"
+    app.config["LOYALTY_SERVICE_URL"] = os.getenv("LOYALTY_SERVICE_URL", "http://loyalty-service:8000")
     if name == "development":
         app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("SQLALCHEMY_DATABASE_URI")
         app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = os.getenv(

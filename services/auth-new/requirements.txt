@@ -11,3 +11,4 @@ gunicorn>=21.2
 bcrypt==5.0.0
 psycopg2-binary
 prometheus_flask_exporter
+requests>=2.31.0

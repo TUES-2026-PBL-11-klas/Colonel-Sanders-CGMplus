@@ -1,6 +1,7 @@
 from flask_smorest import Blueprint
 from flask.views import MethodView
 from flask import abort, current_app
+import requests
 
 from src.extensions import db
 from src.repositories.user_repository import UserRepository
@@ -35,6 +36,21 @@ class Register(MethodView):
                 password=json_data["password"],
             )
             db.session.commit()
+
+            # Fetch user to get UUID for loyalty service
+            user = UserRepository(db.session).get_by_email(json_data["email"])
+            if user:
+                # Make request to loyalty service
+                loyalty_service_url = current_app.config.get("LOYALTY_SERVICE_URL")
+                try:
+                    requests.post(
+                        f"{loyalty_service_url}/internal/profile",
+                        json={"uuid": str(user.id)},
+                        timeout=5
+                    )
+                except Exception as e:
+                    current_app.logger.error(f"Failed to call loyalty service: {str(e)}")
+
             return result
         except ResourceConflictError as e:
             db.session.rollback()
