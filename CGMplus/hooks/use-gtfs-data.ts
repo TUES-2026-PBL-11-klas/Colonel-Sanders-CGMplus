@@ -1,6 +1,10 @@
-import { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 
-const GTFS_BASE = `http://172.26.128.114:5001/api/v1`;
+const API_HOST = process.env.EXPO_PUBLIC_GTFS_HOST || process.env.EXPO_PUBLIC_API_HOST || '192.168.1.109';
+const API_PORT = process.env.EXPO_PUBLIC_GTFS_PORT || process.env.EXPO_PUBLIC_API_PORT || '5000';
+const GTFS_API_PREFIX_RAW = process.env.EXPO_PUBLIC_GTFS_API_PREFIX || process.env.EXPO_PUBLIC_API_PREFIX || '/api/v1';
+const GTFS_API_PREFIX = GTFS_API_PREFIX_RAW.startsWith('/') ? GTFS_API_PREFIX_RAW : `/${GTFS_API_PREFIX_RAW}`;
+const GTFS_BASE = `http://${API_HOST}:${API_PORT}${GTFS_API_PREFIX}`;
 const VEHICLE_POLL_MS = 10000;
 
 // Global state to store fetched data
@@ -9,17 +13,17 @@ let globalRoutes: any[] = [];
 let globalVehicles: any[] = [];
 let globalTrips: any[] = [];
 let globalSubscribers: Set<(type: string, data: any[]) => void> = new Set();
+let globalInit = false;
+let globalTimer: ReturnType<typeof setInterval> | null = null;
 
 export function useGtfsData() {
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const initRef = useRef(false);
-
   const fetchStops = useCallback(async () => {
-    console.log('[GTFS-Global] Fetching stops from:', `${GTFS_BASE}/static/static/stops`);
+    const url = `${GTFS_BASE}/static/static/stops`;
+    console.log('[GTFS-Global] Fetching stops from:', url);
     try {
       let page = 1, pages = 1, all: any[] = [];
       while (page <= pages) {
-        const res = await fetch(`${GTFS_BASE}/static/static/stops?page=${page}`);
+        const res = await fetch(`${url}?page=${page}`);
         if (!res.ok) throw new Error(`Stops HTTP ${res.status}`);
         const data = await res.json();
         all = all.concat(data.stops || []);
@@ -30,16 +34,17 @@ export function useGtfsData() {
       globalStops = all;
       globalSubscribers.forEach(cb => cb('stops', all));
     } catch (e: any) {
-      console.error('[GTFS-Global] Stops error:', e.message);
+      console.error('[GTFS-Global] Stops error:', e.message, '| URL:', url);
     }
   }, []);
 
   const fetchRoutes = useCallback(async () => {
-    console.log('[GTFS-Global] Fetching routes from:', `${GTFS_BASE}/static/static/routes`);
+    const url = `${GTFS_BASE}/static/static/routes`;
+    console.log('[GTFS-Global] Fetching routes from:', url);
     try {
       let page = 1, pages = 1, all: any[] = [];
       while (page <= pages) {
-        const res = await fetch(`${GTFS_BASE}/static/static/routes?page=${page}`);
+        const res = await fetch(`${url}?page=${page}`);
         if (!res.ok) throw new Error(`Routes HTTP ${res.status}`);
         const data = await res.json();
         all = all.concat(data.routes || []);
@@ -50,16 +55,17 @@ export function useGtfsData() {
       globalRoutes = all;
       globalSubscribers.forEach(cb => cb('routes', all));
     } catch (e: any) {
-      console.error('[GTFS-Global] Routes error:', e.message);
+      console.error('[GTFS-Global] Routes error:', e.message, '| URL:', url);
     }
   }, []);
 
   const fetchTrips = useCallback(async () => {
-    console.log('[GTFS-Global] Fetching trips from:', `${GTFS_BASE}/static/static/trips`);
+    const url = `${GTFS_BASE}/static/static/trips`;
+    console.log('[GTFS-Global] Fetching trips from:', url);
     try {
       let page = 1, pages = 1, all: any[] = [];
       while (page <= pages) {
-        const res = await fetch(`${GTFS_BASE}/static/static/trips?page=${page}`);
+        const res = await fetch(`${url}?page=${page}`);
         if (!res.ok) throw new Error(`Trips HTTP ${res.status}`);
         const data = await res.json();
         all = all.concat(data.trips || []);
@@ -70,13 +76,14 @@ export function useGtfsData() {
       globalTrips = all;
       globalSubscribers.forEach(cb => cb('trips', all));
     } catch (e: any) {
-      console.error('[GTFS-Global] Trips error:', e.message);
+      console.error('[GTFS-Global] Trips error:', e.message, '| URL:', url);
     }
   }, []);
 
   const fetchVehicles = useCallback(async () => {
+    const url = `${GTFS_BASE}/realtime/vehicle-positions`;
     try {
-      const res = await fetch(`${GTFS_BASE}/realtime/vehicle-positions`);
+      const res = await fetch(url);
       if (!res.ok) throw new Error(`Vehicles HTTP ${res.status}`);
       const data = await res.json();
       const list = data.vehicle_positions || [];
@@ -84,14 +91,14 @@ export function useGtfsData() {
       globalVehicles = list;
       globalSubscribers.forEach(cb => cb('vehicles', list));
     } catch (e: any) {
-      console.error('[GTFS-Global] Vehicles error:', e.message);
+      console.error('[GTFS-Global] Vehicles error:', e.message, '| URL:', url);
     }
   }, []);
 
-  useEffect(() => {
-    // Only initialize once
-    if (initRef.current) return;
-    initRef.current = true;
+  const init = useCallback(() => {
+    // Only initialize once globally
+    if (globalInit) return;
+    globalInit = true;
 
     // Initial fetches
     fetchStops();
@@ -100,14 +107,26 @@ export function useGtfsData() {
 
     // Poll vehicles
     fetchVehicles();
-    timerRef.current = setInterval(fetchVehicles, VEHICLE_POLL_MS);
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    if (globalTimer) clearInterval(globalTimer);
+    globalTimer = setInterval(fetchVehicles, VEHICLE_POLL_MS);
   }, [fetchStops, fetchRoutes, fetchTrips, fetchVehicles]);
 
-  return {
+  // Provide a reset if auth unmounts (optional, but good for global state)
+  const reset = useCallback(() => {
+    globalInit = false;
+    if (globalTimer) {
+      clearInterval(globalTimer);
+      globalTimer = null;
+    }
+    globalStops = [];
+    globalRoutes = [];
+    globalVehicles = [];
+    globalTrips = [];
+  }, []);
+
+  return React.useMemo(() => ({
+    init,
+    reset,
     subscribe: (callback: (type: string, data: any[]) => void) => {
       globalSubscribers.add(callback);
       // Send current data immediately if available
@@ -124,5 +143,5 @@ export function useGtfsData() {
     getRoutes: () => globalRoutes,
     getTrips: () => globalTrips,
     getVehicles: () => globalVehicles,
-  };
+  }), [init, reset]);
 }

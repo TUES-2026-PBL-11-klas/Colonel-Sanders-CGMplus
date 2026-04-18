@@ -1,8 +1,12 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TextInput, FlatList, TouchableOpacity, Keyboard, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { useGtfsData } from '@/hooks/use-gtfs-data';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ThemedText } from '@/components/themed-text';
 
 const MIN_ZOOM = 16;
 
@@ -10,9 +14,13 @@ export default function MapScreen() {
   const webViewRef = useRef<WebView>(null);
   const [status, setStatus] = useState({ vehicles: 0, stops: 0, error: '' });
   const [gtfsCache, setGtfsCache] = useState<{ [key: string]: any[] }>({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const gtfsData = useGtfsData();
   const navigation = useNavigation();
-  const isFocused = useIsFocused();
+  const insets = useSafeAreaInsets();
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? 'light'];
 
   // ── WebView Injection ───────────────────────────────────────────────────
 
@@ -43,15 +51,44 @@ export default function MapScreen() {
   const handleWebViewLoadEnd = () => {
     // Re-inject cached GTFS data after WebView reloads
     Object.entries(gtfsCache).forEach(([type, data]) => {
-      inject(`window.receiveData('${type}', ${JSON.stringify(data)})`);
+      if (type === 'stops') {
+        inject(`window.receiveData('stops', ${JSON.stringify(data)})`);
+      } else if (type === 'routes') {
+        inject(`window.receiveData('routes', ${JSON.stringify(data)})`);
+      } else if (type === 'trips') {
+        inject(`window.receiveData('trips', ${JSON.stringify(data)})`);
+      } else if (type === 'vehicles') {
+        inject(`window.receiveData('vehicles', ${JSON.stringify(data)})`);
+      }
     });
   };
 
+  // ── Search Logic ───────────────────────────────────────────────────────
+  
   useEffect(() => {
-    if (isFocused) {
-      webViewRef.current?.reload();
+    if (searchQuery.length >= 2) {
+      const stops = gtfsData.getStops();
+      const q = searchQuery.toLowerCase();
+      const results = stops.filter(s => 
+        (s.stop_name && s.stop_name.toLowerCase().includes(q)) ||
+        (s.stop_code && s.stop_code.toLowerCase().includes(q))
+      ).slice(0, 5); // display up to 5
+      setSearchResults(results);
+    } else {
+      setSearchResults([]);
     }
-  }, [isFocused]);
+  }, [searchQuery, gtfsData]);
+
+  const handleStopSelect = (stop: any) => {
+    const lat = parseFloat(stop.stop_lat || stop.lat);
+    const lon = parseFloat(stop.stop_lon || stop.lon);
+    if (!isNaN(lat) && !isNaN(lon)) {
+      inject(`map.setView([${lat}, ${lon}], 18);`);
+      inject(`L.popup().setLatLng([${lat}, ${lon}]).setContent('<b>' + ${JSON.stringify(stop.stop_name)} + '</b><br>Спирка №: ' + ${JSON.stringify(stop.stop_code || '—')}).openOn(map);`);
+    }
+    setSearchQuery('');
+    Keyboard.dismiss();
+  };
 
   // ── Leaflet HTML ───────────────────────────────────────────────────────
 
@@ -198,7 +235,7 @@ export default function MapScreen() {
       if (!tripId || !allTrips || allTrips.length === 0) {
         return 'Unknown';
       }
-      const trip = allTrips.find(t => t.trip_id === tripId);
+      const trip = allTrips.find(t => String(t.trip_id) === String(tripId));
       return trip?.trip_headsign || 'Unknown';
     }
 
@@ -323,7 +360,36 @@ export default function MapScreen() {
 `;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: theme.background }]}>
+      <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.outline + '40' }]}>
+        <View style={[styles.searchContainer, { backgroundColor: theme.surfaceVariant }]}>
+          <TextInput
+            placeholder="Търсене на спирка..."
+            placeholderTextColor={theme.onSurfaceVariant}
+            style={[styles.searchInput, { color: theme.onSurface }]}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+        {searchResults.length > 0 && (
+          <View style={[styles.searchResults, { backgroundColor: theme.surface, borderColor: theme.outline + '40' }]}>
+            {searchResults.map((item, index) => (
+              <TouchableOpacity
+                key={item.stop_id || index}
+                style={[styles.searchResultItem, index < searchResults.length - 1 && { borderBottomColor: theme.outline + '20', borderBottomWidth: 1 }]}
+                onPress={() => handleStopSelect(item)}
+              >
+                <ThemedText>{item.stop_name}</ThemedText>
+                {item.stop_code && (
+                  <ThemedText style={{ fontSize: 12, color: theme.onSurfaceVariant }}>
+                    Код: {item.stop_code}
+                  </ThemedText>
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </View>
       <WebView
         ref={webViewRef}
         originWhitelist={['*']}
@@ -346,4 +412,38 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
+  header: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    zIndex: 10,
+    elevation: 10,
+  },
+  searchContainer: {
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    height: 48,
+    justifyContent: 'center',
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+  },
+  searchResults: {
+    position: 'absolute',
+    top: 60,
+    left: 16,
+    right: 16,
+    maxHeight: 200,
+    borderRadius: 8,
+    borderWidth: 1,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  searchResultItem: {
+    padding: 12,
+  },
 });

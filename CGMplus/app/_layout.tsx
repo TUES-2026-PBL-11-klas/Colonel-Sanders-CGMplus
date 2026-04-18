@@ -18,6 +18,17 @@ function AppShell() {
   const segments = useSegments();
   const router = useRouter();
 
+  // Initialize global GTFS data fetching only when authenticated
+  const gtfs = useGtfsData();
+  
+  useEffect(() => {
+    if (isAuthenticated) {
+      gtfs.init();
+    } else {
+      gtfs.reset();
+    }
+  }, [isAuthenticated, gtfs.init, gtfs.reset]);
+
   useEffect(() => {
     if (isLoading) return;
 
@@ -57,7 +68,6 @@ function AppShell() {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  useGtfsData(); // Initialize global GTFS data fetching
 
   return (
     <SafeAreaProvider>
