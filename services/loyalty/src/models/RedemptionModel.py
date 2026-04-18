@@ -9,7 +9,8 @@ class RedemptionModel(BaseModel):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID,
         primary_key=True,
-        index=True
+        index=True,
+        default=uuid.uuid4,
     )
 
     offer_id: Mapped[int] = mapped_column(

@@ -1,10 +1,12 @@
 from flask_smorest import Blueprint
 from flask.views import MethodView
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from src.schemas.offersSchema import OfferSchema
 from src.repositories.offerRepository import OfferRepository
 from src.extensions import db
-from src.services.offerService import OfferService
+from src.services.OfferService import OfferService
+from src.exceptions.OfferExceptions import InsufficientFunds
+from flask import jsonify
 
 blp = Blueprint("Offers", "offers", url_prefix="/offers")
 
@@ -23,7 +25,15 @@ class ReedemRoute(MethodView):
     @blp.doc(security=[{"BearerAuth": []}])
     @jwt_required()
     def post(self, offer_id):
-        offer = OfferRepository(db.session).get_by_id(offer_id)
-        OfferService.redeem_offer(offer_id)
+        profile_id = get_jwt_identity()
+        # offer = OfferRepository(db.session).get_by_id(offer_id)
+        try:
+            OfferService.redeem_offer(offer_id, profile_id)
+        except InsufficientFunds:
+            return jsonify({
+                "error": "Insufficient funds"
+            }), 402
 
-        return offer # return something else
+        return jsonify({
+            "status": "completed"
+        }), 201
