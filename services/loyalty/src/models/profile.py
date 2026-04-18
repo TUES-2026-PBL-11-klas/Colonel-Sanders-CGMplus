@@ -1,6 +1,6 @@
 from src.extensions import db
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Integer, String, DateTime, func
 import uuid
 from datetime import datetime
@@ -33,4 +33,10 @@ class Profile(db.Model):
         DateTime,
         server_default=func.now(),
         onupdate=func.now()
+    )
+
+    transactions: Mapped[
+        list["PointTransaction"]  # noqa: F821 #type: ignore
+    ] = relationship(
+        "PointTransaction", back_populates="profile"
     )

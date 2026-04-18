@@ -1,7 +1,7 @@
 from src.extensions import db
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import Integer, String, DateTime, Boolean, ForeignKey, func
+from sqlalchemy import String, DateTime, Boolean, func
 import uuid
 from datetime import datetime
 
