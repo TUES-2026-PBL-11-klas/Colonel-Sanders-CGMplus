@@ -1,13 +1,16 @@
 from uuid import UUID
-from src.repositories.ProfileRepositoriy import ProfileRepository
+from src.repositories.ProfileRepositority import ProfileRepository
 from src.models.pointTransaction import PointTransaction, PT_TypeEnum
 from src.exceptions.ProfileExceptions import ProfileNotFound
 from src.extensions import db
 
+
 class PointService:
     @staticmethod
     def add_points(profile_id: UUID):
-        profile = ProfileRepository(session=db.session).get_by_uuid(profile_id=profile_id)
+        profile = ProfileRepository(
+            session=db.session
+        ).get_by_uuid(profile_id=profile_id)
         if profile is None:
             raise ProfileNotFound()
 

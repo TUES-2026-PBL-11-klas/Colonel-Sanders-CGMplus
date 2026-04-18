@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import select
 from src.models.profile import Profile as ProfileModel
 from uuid import UUID
 
