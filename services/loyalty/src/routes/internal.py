@@ -16,14 +16,17 @@ blp = Blueprint("internal", "internal", url_prefix="/internal")
 class Points(MethodView):
     def patch(self, account_id):
         try:
-            uuid.UUID(account_id, version=4)
+            account_uuid = uuid.UUID(account_id, version=4)
         except ValueError:
             abort(400, description="Invalid account_id: must be a valid UUID.")
 
-        resp = PointService.add_points(account_id)
-        return jsonify({
-            'status': resp
-        })
+        try:
+            resp = PointService.add_points(account_uuid)
+            return jsonify({
+                'status': resp
+            })
+        except Exception:
+            return jsonify({'error': 'Failed to add points'}), 500
 
 
 @blp.route("/profile")

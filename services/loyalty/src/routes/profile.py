@@ -17,8 +17,9 @@ class Profile(MethodView):
     @blp.doc(security=[{"BearerAuth": []}])
     @jwt_required()
     def get(self):
-        profile_id = get_jwt_identity()
+        profile_id_str = get_jwt_identity()
         try:
+            profile_id = UUID(profile_id_str)
             profile = ProfileRepository(db.session).get_by_uuid(profile_id)
             if not profile:
                 return jsonify({'error': 'Profile not found'}), 404
