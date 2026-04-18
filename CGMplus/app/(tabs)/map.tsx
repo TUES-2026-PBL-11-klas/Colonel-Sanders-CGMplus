@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { View, StyleSheet, TextInput, FlatList, TouchableOpacity, Keyboard, Platform } from 'react-native';
+import { View, StyleSheet, TextInput, TouchableOpacity, Keyboard } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { useNavigation, useIsFocused } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { useGtfsData } from '@/hooks/use-gtfs-data';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/theme';
@@ -64,12 +64,12 @@ export default function MapScreen() {
   };
 
   // ── Search Logic ───────────────────────────────────────────────────────
-  
+
   useEffect(() => {
     if (searchQuery.length >= 2) {
       const stops = gtfsData.getStops();
       const q = searchQuery.toLowerCase();
-      const results = stops.filter(s => 
+      const results = stops.filter(s =>
         (s.stop_name && s.stop_name.toLowerCase().includes(q)) ||
         (s.stop_code && s.stop_code.toLowerCase().includes(q))
       ).slice(0, 5); // display up to 5
@@ -77,14 +77,29 @@ export default function MapScreen() {
     } else {
       setSearchResults([]);
     }
-  }, [searchQuery, gtfsData]);
+  }, [searchQuery, gtfsData, gtfsCache.stops]);
+
+  const escapeHtml = (value: any) => {
+    return String(value).replace(/[&<>"']/g, (char) => {
+      switch (char) {
+        case '&': return '&amp;';
+        case '<': return '&lt;';
+        case '>': return '&gt;';
+        case '"': return '&quot;';
+        case "'": return '&#39;';
+        default: return char;
+      }
+    });
+  };
 
   const handleStopSelect = (stop: any) => {
     const lat = parseFloat(stop.stop_lat || stop.lat);
     const lon = parseFloat(stop.stop_lon || stop.lon);
     if (!isNaN(lat) && !isNaN(lon)) {
+      const stopName = escapeHtml(stop.stop_name);
+      const stopCode = escapeHtml(stop.stop_code || '—');
       inject(`map.setView([${lat}, ${lon}], 18);`);
-      inject(`L.popup().setLatLng([${lat}, ${lon}]).setContent('<b>' + ${JSON.stringify(stop.stop_name)} + '</b><br>Спирка №: ' + ${JSON.stringify(stop.stop_code || '—')}).openOn(map);`);
+      inject(`L.popup().setLatLng([${lat}, ${lon}]).setContent('<b>' + ${JSON.stringify(stopName)} + '</b><br>Спирка №: ' + ${JSON.stringify(stopCode)}).openOn(map);`);
     }
     setSearchQuery('');
     Keyboard.dismiss();
@@ -133,6 +148,7 @@ export default function MapScreen() {
       return this._div;
     };
     hud.update = function(html) { this._div.innerHTML = html; };
+    function updateHud(html) { hud.update(html); }
     hud.addTo(map);
 
     // ── Icons & Markers ──────────────────────────────────────────────────

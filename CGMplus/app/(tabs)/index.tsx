@@ -1,11 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, useColorScheme, BackHandler, Alert, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, useColorScheme, BackHandler, Alert } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '../../context/auth-context';
 import { Colors } from '@/constants/theme';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { Animated as RNAnimated, PanResponder, type PanResponderGestureState, Pressable } from 'react-native';
+import { Animated as RNAnimated, PanResponder, Pressable } from 'react-native';
 import QRCodeStyled from 'react-native-qrcode-styled';
 import { HCESession, NFCTagType4NDEFContentType, NFCTagType4 } from 'react-native-hce';
 import { getOverlayStyle, SHEET_HEIGHT, walletStyles} from '../../components/wallet-styles';
@@ -19,7 +19,6 @@ export default function HomeScreen() {
   const { isAuthenticated } = useAuth();
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
-  const borderColor = theme.outline || '#d9dde3';
   const isDark = colorScheme === 'dark';
 
   // Sheet background: lighter undertone so it floats above the page bg
