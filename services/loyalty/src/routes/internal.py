@@ -4,6 +4,7 @@ from flask import jsonify
 from src.schemas.internalSchema import CreateProfileSchema
 from src.services.profile import ProfileService
 from src.services.card import CardService
+from src.services.PointService import PointService
 
 
 blp = Blueprint("internal", "internal", url_prefix="/internal")
@@ -11,9 +12,7 @@ blp = Blueprint("internal", "internal", url_prefix="/internal")
 @blp.route("/<string:account_id>/points")
 class Points(MethodView):
     def patch(self, account_id):
-        resp = ProfileService.update_points(account_id)
-        if resp is None:
-            resp = False
+        resp = PointService.add_points(account_id)
 
         return jsonify({
             'status': resp

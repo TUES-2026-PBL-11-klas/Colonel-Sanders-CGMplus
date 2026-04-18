@@ -15,7 +15,8 @@ class PointTransaction(BaseModel):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID,
         primary_key=True,
-        index=True
+        index=True,
+        default=uuid.uuid4
     )
 
     account_id: Mapped[uuid.UUID] = mapped_column(
