@@ -1,7 +1,13 @@
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
-const API_BASE_URL = Platform.OS === 'android' ? 'http://192.168.1.52:5000' : 'http://localhost:5000'; //your ip, use ip a to find it
+const API_HOST = process.env.EXPO_PUBLIC_API_HOST || '192.168.1.109';
+const API_PORT = process.env.EXPO_PUBLIC_API_PORT || '5000';
+const API_PREFIX_RAW = process.env.EXPO_PUBLIC_API_PREFIX || '/api/v1';
+const API_PREFIX = API_PREFIX_RAW.startsWith('/') ? API_PREFIX_RAW : `/${API_PREFIX_RAW}`;
+const AUTH_BASE_PATH = `${API_PREFIX}/auth`;
+const USERS_BASE_PATH = `${API_PREFIX}/users`;
+const API_BASE_URL = Platform.OS === 'android' ? `http://${API_HOST}:${API_PORT}` : `http://${API_HOST}:${API_PORT}`;
 
 export interface AuthResponse {
   access_token: string;
@@ -44,10 +50,10 @@ class API {
     });
 
     // Handle session expiry and refresh
-    if (response.status === 401 && !endpoint.includes('/auth/')) {
+    if (response.status === 401 && !endpoint.includes(`${AUTH_BASE_PATH}/`)) {
       const refreshToken = await getRefreshToken();
       if (refreshToken) {
-        const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        const refreshResponse = await fetch(`${API_BASE_URL}${AUTH_BASE_PATH}/refresh`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refresh_token: refreshToken }),
@@ -74,7 +80,7 @@ class API {
   }
 
   static async register(payload: any): Promise<Response> {
-    return this.request('/auth/register', {
+    return this.request(`${AUTH_BASE_PATH}/register`, {
       method: 'POST',
       body: JSON.stringify({
         email: payload.email.toLowerCase(),
@@ -84,7 +90,7 @@ class API {
   }
 
   static async login(payload: any): Promise<Response> {
-    return this.request('/auth/login', {
+    return this.request(`${AUTH_BASE_PATH}/login`, {
       method: 'POST',
       body: JSON.stringify({
         email: payload.email.toLowerCase(),
@@ -94,11 +100,11 @@ class API {
   }
 
   static async getMe(): Promise<Response> {
-    return this.request('/users/me');
+    return this.request(`${USERS_BASE_PATH}/me`);
   }
 
   static async changePassword(payload: any): Promise<Response> {
-    return this.request('/users/me/password', {
+    return this.request(`${USERS_BASE_PATH}/me/password`, {
       method: 'PATCH',
       body: JSON.stringify({
         current_password: payload.current_password,
@@ -108,7 +114,7 @@ class API {
   }
 
   static async deleteAccount(): Promise<Response> {
-    return this.request('/users/me', {
+    return this.request(`${USERS_BASE_PATH}/me`, {
       method: 'DELETE',
     });
   }

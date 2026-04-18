@@ -1,14 +1,26 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TextInput, TouchableOpacity, Keyboard } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { useNavigation } from '@react-navigation/native';
 import { useGtfsData } from '@/hooks/use-gtfs-data';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ThemedText } from '@/components/themed-text';
 
 const MIN_ZOOM = 16;
 
 export default function MapScreen() {
   const webViewRef = useRef<WebView>(null);
   const [status, setStatus] = useState({ vehicles: 0, stops: 0, error: '' });
+  const [gtfsCache, setGtfsCache] = useState<{ [key: string]: any[] }>({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const gtfsData = useGtfsData();
+  const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? 'light'];
 
   // ── WebView Injection ───────────────────────────────────────────────────
 
@@ -19,6 +31,7 @@ export default function MapScreen() {
   useEffect(() => {
     // Subscribe to global GTFS data
     const unsubscribe = gtfsData.subscribe((type: string, data: any[]) => {
+      setGtfsCache(prev => ({ ...prev, [type]: data }));
       if (type === 'stops') {
         setStatus(prev => ({ ...prev, stops: data.length }));
         inject(`window.receiveData('stops', ${JSON.stringify(data)})`);
@@ -34,6 +47,63 @@ export default function MapScreen() {
 
     return () => unsubscribe();
   }, []);
+
+  const handleWebViewLoadEnd = () => {
+    // Re-inject cached GTFS data after WebView reloads
+    Object.entries(gtfsCache).forEach(([type, data]) => {
+      if (type === 'stops') {
+        inject(`window.receiveData('stops', ${JSON.stringify(data)})`);
+      } else if (type === 'routes') {
+        inject(`window.receiveData('routes', ${JSON.stringify(data)})`);
+      } else if (type === 'trips') {
+        inject(`window.receiveData('trips', ${JSON.stringify(data)})`);
+      } else if (type === 'vehicles') {
+        inject(`window.receiveData('vehicles', ${JSON.stringify(data)})`);
+      }
+    });
+  };
+
+  // ── Search Logic ───────────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (searchQuery.length >= 2) {
+      const stops = gtfsData.getStops();
+      const q = searchQuery.toLowerCase();
+      const results = stops.filter(s =>
+        (s.stop_name && s.stop_name.toLowerCase().includes(q)) ||
+        (s.stop_code && s.stop_code.toLowerCase().includes(q))
+      ).slice(0, 5); // display up to 5
+      setSearchResults(results);
+    } else {
+      setSearchResults([]);
+    }
+  }, [searchQuery, gtfsData, gtfsCache.stops]);
+
+  const escapeHtml = (value: any) => {
+    return String(value).replace(/[&<>"']/g, (char) => {
+      switch (char) {
+        case '&': return '&amp;';
+        case '<': return '&lt;';
+        case '>': return '&gt;';
+        case '"': return '&quot;';
+        case "'": return '&#39;';
+        default: return char;
+      }
+    });
+  };
+
+  const handleStopSelect = (stop: any) => {
+    const lat = parseFloat(stop.stop_lat || stop.lat);
+    const lon = parseFloat(stop.stop_lon || stop.lon);
+    if (!isNaN(lat) && !isNaN(lon)) {
+      const stopName = escapeHtml(stop.stop_name);
+      const stopCode = escapeHtml(stop.stop_code || '—');
+      inject(`map.setView([${lat}, ${lon}], 18);`);
+      inject(`L.popup().setLatLng([${lat}, ${lon}]).setContent('<b>' + ${JSON.stringify(stopName)} + '</b><br>Спирка №: ' + ${JSON.stringify(stopCode)}).openOn(map);`);
+    }
+    setSearchQuery('');
+    Keyboard.dismiss();
+  };
 
   // ── Leaflet HTML ───────────────────────────────────────────────────────
 
@@ -78,14 +148,8 @@ export default function MapScreen() {
       return this._div;
     };
     hud.update = function(html) { this._div.innerHTML = html; };
+    function updateHud(html) { hud.update(html); }
     hud.addTo(map);
-
-    function updateHud(vCount, sCount, err) {
-      hud.update('<b>Native Bridge Active</b><br>' +
-                 'Vehicles: ' + vCount + '<br>' +
-                 'Stops (cache): ' + sCount +
-                 (err ? '<br><span style="color:red">Error: ' + err + '</span>' : ''));
-    }
 
     // ── Icons & Markers ──────────────────────────────────────────────────
     function makeIcon(emoji, cls) {
@@ -184,11 +248,11 @@ export default function MapScreen() {
     }
 
     function getTripHeadsign(tripId, routeId) {
-      if (tripId) {
-        const trip = allTrips.find(t => t.trip_id === tripId);
-        if (trip) return trip.trip_headsign || 'Unknown';
+      if (!tripId || !allTrips || allTrips.length === 0) {
+        return 'Unknown';
       }
-      return 'Unknown';
+      const trip = allTrips.find(t => String(t.trip_id) === String(tripId));
+      return trip?.trip_headsign || 'Unknown';
     }
 
     function renderStops() {
@@ -217,12 +281,26 @@ export default function MapScreen() {
       if (!tooZoomedOut) {
         list.forEach(v => {
           const id = v.vehicle?.id || v.id;
+          const occupancyStatus = parseInt(v.occupancy_status, 10);
+          let occupancy = 'unknown';
           const lat = parseFloat(v.position?.latitude);
           const lon = parseFloat(v.position?.longitude);
-          if (!id || isNaN(lat) || isNaN(lon)) return;
+          const speed = parseFloat(v.position?.speed);
+          if (!id || isNaN(lat) || isNaN(lon) || isNaN(speed)) return;
 
           const latlng = L.latLng(lat, lon);
           const inBounds = expandedBounds.contains(latlng);
+
+          switch (occupancyStatus) {
+            case 0: occupancy = 'Празен'; break;
+            case 1: occupancy = 'Има налични места'; break;
+            case 2: occupancy = 'Малко налични места'; break;
+            case 3: occupancy = 'Само правостоящи'; break;
+            case 4: occupancy = 'Натъпкан'; break;
+            case 5: occupancy = 'Пълен'; break;
+            case 6: occupancy = 'Не приема пътници'; break;
+            default: occupancy = 'unknown';
+          }
 
           if (inBounds) {
             seen.add(id);
@@ -231,8 +309,10 @@ export default function MapScreen() {
             const routeInfo = getRouteInfo(routeId);
             const headsign = getTripHeadsign(tripId, routeId);
             const heading = v.position?.bearing || 0;
-            const popup = '<b>' + routeInfo.shortName + '</b><br>' +
+            const popup = '<b>' + getVehicleType(id).type + ' ' + routeInfo.shortName + '</b><br>' +
                           '<small>' + headsign + '</small><br>' +
+                          'Натовареност: ' + occupancy + '<br>' +
+                          'Скорост: ' + speed + ' км/ч<br>' +
                           'ID: ' + id;
 
             if (vehicleMarkers[id]) {
@@ -254,7 +334,8 @@ export default function MapScreen() {
                   const rid = currentData.trip?.route_id || 'Unknown';
                   const rInfo = getRouteInfo(rid);
                   const h = currentData.position?.bearing || 0;
-                  const hs = currentData.trip?.trip_id ? (allTrips.find(t => t.trip_id === currentData.trip?.trip_id)?.trip_headsign || 'Unknown') : 'Unknown';
+                  const tid = currentData.trip?.trip_id;
+                  const hs = getTripHeadsign(tid, rid);
                   vehicleMarkers[id].setIcon(makeVehicleIcon(rInfo.shortName, id, h, hs, true));
                 }
               });
@@ -266,7 +347,8 @@ export default function MapScreen() {
                   const rid = currentData.trip?.route_id || 'Unknown';
                   const rInfo = getRouteInfo(rid);
                   const h = currentData.position?.bearing || 0;
-                  const hs = currentData.trip?.trip_id ? (allTrips.find(t => t.trip_id === currentData.trip?.trip_id)?.trip_headsign || 'Unknown') : 'Unknown';
+                  const tid = currentData.trip?.trip_id;
+                  const hs = getTripHeadsign(tid, rid);
                   vehicleMarkers[id].setIcon(makeVehicleIcon(rInfo.shortName, id, h, hs, false));
                 }
               });
@@ -294,7 +376,36 @@ export default function MapScreen() {
 `;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: theme.background }]}>
+      <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.outline + '40' }]}>
+        <View style={[styles.searchContainer, { backgroundColor: theme.surfaceVariant }]}>
+          <TextInput
+            placeholder="Търсене на спирка..."
+            placeholderTextColor={theme.onSurfaceVariant}
+            style={[styles.searchInput, { color: theme.onSurface }]}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+        {searchResults.length > 0 && (
+          <View style={[styles.searchResults, { backgroundColor: theme.surface, borderColor: theme.outline + '40' }]}>
+            {searchResults.map((item, index) => (
+              <TouchableOpacity
+                key={item.stop_id || index}
+                style={[styles.searchResultItem, index < searchResults.length - 1 && { borderBottomColor: theme.outline + '20', borderBottomWidth: 1 }]}
+                onPress={() => handleStopSelect(item)}
+              >
+                <ThemedText>{item.stop_name}</ThemedText>
+                {item.stop_code && (
+                  <ThemedText style={{ fontSize: 12, color: theme.onSurfaceVariant }}>
+                    Код: {item.stop_code}
+                  </ThemedText>
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </View>
       <WebView
         ref={webViewRef}
         originWhitelist={['*']}
@@ -307,6 +418,7 @@ export default function MapScreen() {
         startInLoadingState={true}
         allowFileAccessFromFileURLs={true}
         allowUniversalAccessFromFileURLs={true}
+        onLoadEnd={handleWebViewLoadEnd}
         onMessage={(e) => console.log('[WebView]', e.nativeEvent.data)}
       />
     </View>
@@ -316,4 +428,38 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
+  header: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    zIndex: 10,
+    elevation: 10,
+  },
+  searchContainer: {
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    height: 48,
+    justifyContent: 'center',
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+  },
+  searchResults: {
+    position: 'absolute',
+    top: 60,
+    left: 16,
+    right: 16,
+    maxHeight: 200,
+    borderRadius: 8,
+    borderWidth: 1,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  searchResultItem: {
+    padding: 12,
+  },
 });

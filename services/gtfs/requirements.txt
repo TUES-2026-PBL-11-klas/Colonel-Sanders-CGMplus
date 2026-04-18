@@ -1,9 +1,0 @@
-Flask==3.0.2
-flask-smorest==0.44.0
-marshmallow==3.21.0
-python-dotenv==1.0.1
-pytest==8.2.0
-requests>=2.31
-gtfs-realtime-bindings>=1.0
-apscheduler>=3.10
-gunicorn>=21.2
