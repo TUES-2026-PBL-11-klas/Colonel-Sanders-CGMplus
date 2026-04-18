@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { useGtfsData } from '@/hooks/use-gtfs-data';
 
 const MIN_ZOOM = 16;
@@ -8,7 +9,10 @@ const MIN_ZOOM = 16;
 export default function MapScreen() {
   const webViewRef = useRef<WebView>(null);
   const [status, setStatus] = useState({ vehicles: 0, stops: 0, error: '' });
+  const [gtfsCache, setGtfsCache] = useState<{ [key: string]: any[] }>({});
   const gtfsData = useGtfsData();
+  const navigation = useNavigation();
+  const isFocused = useIsFocused();
 
   // ── WebView Injection ───────────────────────────────────────────────────
 
@@ -19,6 +23,7 @@ export default function MapScreen() {
   useEffect(() => {
     // Subscribe to global GTFS data
     const unsubscribe = gtfsData.subscribe((type: string, data: any[]) => {
+      setGtfsCache(prev => ({ ...prev, [type]: data }));
       if (type === 'stops') {
         setStatus(prev => ({ ...prev, stops: data.length }));
         inject(`window.receiveData('stops', ${JSON.stringify(data)})`);
@@ -34,6 +39,19 @@ export default function MapScreen() {
 
     return () => unsubscribe();
   }, []);
+
+  const handleWebViewLoadEnd = () => {
+    // Re-inject cached GTFS data after WebView reloads
+    Object.entries(gtfsCache).forEach(([type, data]) => {
+      inject(`window.receiveData('${type}', ${JSON.stringify(data)})`);
+    });
+  };
+
+  useEffect(() => {
+    if (isFocused) {
+      webViewRef.current?.reload();
+    }
+  }, [isFocused]);
 
   // ── Leaflet HTML ───────────────────────────────────────────────────────
 
@@ -79,13 +97,6 @@ export default function MapScreen() {
     };
     hud.update = function(html) { this._div.innerHTML = html; };
     hud.addTo(map);
-
-    function updateHud(vCount, sCount, err) {
-      hud.update('<b>Native Bridge Active</b><br>' +
-                 'Vehicles: ' + vCount + '<br>' +
-                 'Stops (cache): ' + sCount +
-                 (err ? '<br><span style="color:red">Error: ' + err + '</span>' : ''));
-    }
 
     // ── Icons & Markers ──────────────────────────────────────────────────
     function makeIcon(emoji, cls) {
@@ -184,11 +195,11 @@ export default function MapScreen() {
     }
 
     function getTripHeadsign(tripId, routeId) {
-      if (tripId) {
-        const trip = allTrips.find(t => t.trip_id === tripId);
-        if (trip) return trip.trip_headsign || 'Unknown';
+      if (!tripId || !allTrips || allTrips.length === 0) {
+        return 'Unknown';
       }
-      return 'Unknown';
+      const trip = allTrips.find(t => t.trip_id === tripId);
+      return trip?.trip_headsign || 'Unknown';
     }
 
     function renderStops() {
@@ -217,12 +228,26 @@ export default function MapScreen() {
       if (!tooZoomedOut) {
         list.forEach(v => {
           const id = v.vehicle?.id || v.id;
+          const occupancyStatus = parseInt(v.occupancy_status, 10);
+          let occupancy = 'unknown';
           const lat = parseFloat(v.position?.latitude);
           const lon = parseFloat(v.position?.longitude);
-          if (!id || isNaN(lat) || isNaN(lon)) return;
+          const speed = parseFloat(v.position?.speed);
+          if (!id || isNaN(lat) || isNaN(lon) || isNaN(speed)) return;
 
           const latlng = L.latLng(lat, lon);
           const inBounds = expandedBounds.contains(latlng);
+
+          switch (occupancyStatus) {
+            case 0: occupancy = 'Празен'; break;
+            case 1: occupancy = 'Има налични места'; break;
+            case 2: occupancy = 'Малко налични места'; break;
+            case 3: occupancy = 'Само правостоящи'; break;
+            case 4: occupancy = 'Натъпкан'; break;
+            case 5: occupancy = 'Пълен'; break;
+            case 6: occupancy = 'Не приема пътници'; break;
+            default: occupancy = 'unknown';
+          }
 
           if (inBounds) {
             seen.add(id);
@@ -231,8 +256,10 @@ export default function MapScreen() {
             const routeInfo = getRouteInfo(routeId);
             const headsign = getTripHeadsign(tripId, routeId);
             const heading = v.position?.bearing || 0;
-            const popup = '<b>' + routeInfo.shortName + '</b><br>' +
+            const popup = '<b>' + getVehicleType(id).type + ' ' + routeInfo.shortName + '</b><br>' +
                           '<small>' + headsign + '</small><br>' +
+                          'Натовареност: ' + occupancy + '<br>' +
+                          'Скорост: ' + speed + ' км/ч<br>' +
                           'ID: ' + id;
 
             if (vehicleMarkers[id]) {
@@ -254,7 +281,8 @@ export default function MapScreen() {
                   const rid = currentData.trip?.route_id || 'Unknown';
                   const rInfo = getRouteInfo(rid);
                   const h = currentData.position?.bearing || 0;
-                  const hs = currentData.trip?.trip_id ? (allTrips.find(t => t.trip_id === currentData.trip?.trip_id)?.trip_headsign || 'Unknown') : 'Unknown';
+                  const tid = currentData.trip?.trip_id;
+                  const hs = getTripHeadsign(tid, rid);
                   vehicleMarkers[id].setIcon(makeVehicleIcon(rInfo.shortName, id, h, hs, true));
                 }
               });
@@ -266,7 +294,8 @@ export default function MapScreen() {
                   const rid = currentData.trip?.route_id || 'Unknown';
                   const rInfo = getRouteInfo(rid);
                   const h = currentData.position?.bearing || 0;
-                  const hs = currentData.trip?.trip_id ? (allTrips.find(t => t.trip_id === currentData.trip?.trip_id)?.trip_headsign || 'Unknown') : 'Unknown';
+                  const tid = currentData.trip?.trip_id;
+                  const hs = getTripHeadsign(tid, rid);
                   vehicleMarkers[id].setIcon(makeVehicleIcon(rInfo.shortName, id, h, hs, false));
                 }
               });
@@ -307,6 +336,7 @@ export default function MapScreen() {
         startInLoadingState={true}
         allowFileAccessFromFileURLs={true}
         allowUniversalAccessFromFileURLs={true}
+        onLoadEnd={handleWebViewLoadEnd}
         onMessage={(e) => console.log('[WebView]', e.nativeEvent.data)}
       />
     </View>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 
-const GTFS_BASE = `http://192.168.1.52:5001/api/v1`;
+const GTFS_BASE = `http://172.26.128.114:5001/api/v1`;
 const VEHICLE_POLL_MS = 10000;
 
 // Global state to store fetched data
