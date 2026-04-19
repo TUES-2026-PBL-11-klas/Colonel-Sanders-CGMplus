@@ -34,18 +34,9 @@ spec:
             - name: varlogpods
               mountPath: /var/log/pods
               readOnly: true
-          readinessProbe:
-            httpGet:
-              path: /ready
-              port: 9080
-            initialDelaySeconds: 10
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /ready
-              port: 9080
-            initialDelaySeconds: 20
-            periodSeconds: 20
+            - name: varlogcontainers
+              mountPath: /var/log/containers
+              readOnly: true
           resources:
             requests:
               cpu: 50m
@@ -65,4 +56,8 @@ spec:
         - name: varlogpods
           hostPath:
             path: /var/log/pods
+            type: Directory
+        - name: varlogcontainers
+          hostPath:
+            path: /var/log/containers
             type: Directory
