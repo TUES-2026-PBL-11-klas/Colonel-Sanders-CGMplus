@@ -6,6 +6,7 @@ on:
     paths:
       - services/gtfs/**
       - services/auth-new/**
+      - services/loyalty/**
       - .github/workflows/deploy.yml
   workflow_dispatch:
 
@@ -28,6 +29,11 @@ jobs:
             context: services/auth-new
             image_name: auth-new
             manifest_path: gitops/services/auth/deployment.yaml
+          - service_name: loyalty
+            dockerfile: services/loyalty/Dockerfile
+            context: services/loyalty
+            image_name: loyalty
+            manifest_path: gitops/services/loyalty/deployment.yaml
 
     steps:
       - name: Checkout
@@ -100,10 +106,12 @@ jobs:
             ACR_LC=$(echo "${{ secrets.ACR_LOGIN_SERVER }}" | tr '[:upper:]' '[:lower:]')
             sed -i "s|image: .*auth-new:.*|image: ${ACR_LC}/auth-new:${{ github.sha }}|" gitops/environments/prod/manifests/auth-image-patch.yaml
             sed -i "s|image: .*gtfs:.*|image: ${ACR_LC}/gtfs:${{ github.sha }}|" gitops/environments/prod/manifests/gtfs-image-patch.yaml
+            sed -i "s|image: .*loyalty:.*|image: ${ACR_LC}/loyalty:${{ github.sha }}|" gitops/environments/prod/manifests/loyalty-image-patch.yaml
           else
             DOCKERHUB_USER_LC=$(echo "${{ secrets.DOCKERHUB_USERNAME }}" | tr '[:upper:]' '[:lower:]')
             sed -i "s|image: .*auth-new:.*|image: docker.io/${DOCKERHUB_USER_LC}/auth-new:${{ github.sha }}|" gitops/environments/dev/manifests/auth-image-patch.yaml
             sed -i "s|image: .*gtfs:.*|image: docker.io/${DOCKERHUB_USER_LC}/gtfs:${{ github.sha }}|" gitops/environments/dev/manifests/gtfs-image-patch.yaml
+            sed -i "s|image: .*loyalty:.*|image: docker.io/${DOCKERHUB_USER_LC}/loyalty:${{ github.sha }}|" gitops/environments/dev/manifests/loyalty-image-patch.yaml
           fi
 
       - name: Commit and push manifest changes
@@ -113,8 +121,10 @@ jobs:
 
             git add gitops/environments/dev/manifests/auth-image-patch.yaml \
               gitops/environments/dev/manifests/gtfs-image-patch.yaml \
+              gitops/environments/dev/manifests/loyalty-image-patch.yaml \
               gitops/environments/prod/manifests/auth-image-patch.yaml \
-              gitops/environments/prod/manifests/gtfs-image-patch.yaml
+              gitops/environments/prod/manifests/gtfs-image-patch.yaml \
+              gitops/environments/prod/manifests/loyalty-image-patch.yaml
 
           if git diff --cached --quiet; then
             echo "No GitOps manifest changes to commit"
