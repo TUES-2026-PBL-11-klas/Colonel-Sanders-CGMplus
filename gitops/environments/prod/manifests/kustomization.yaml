@@ -4,12 +4,16 @@ kind: Kustomization
 resources:
   - ../../../ingress/ingress.yaml
   - ../../../database/auth-postgres.yaml
+  - ../../../database/loyalty-postgres.yaml
   - ../../../services/gtfs
   - ../../../services/auth
+  - ../../../services/loyalty
   - ../../../azure-secrets
 
 patchesStrategicMerge:
   - auth-image-patch.yaml
   - gtfs-image-patch.yaml
+  - loyalty-image-patch.yaml
   - auth-acr-pullsecret-patch.yaml
   - gtfs-acr-pullsecret-patch.yaml
+  - loyalty-acr-pullsecret-patch.yaml

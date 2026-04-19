@@ -57,6 +57,51 @@ services:
     networks:
       - platform
 
+  loyalty:
+    build:
+      context: ./services/loyalty
+      dockerfile: Dockerfile
+    image: cgmplus/loyalty:local
+    restart: unless-stopped
+    environment:
+      FLASK_ENV: development
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB2:-loyalty_db}
+      POSTGRES_PORT: 5433
+      JWT_SECRET: ${JWT_SECRET:-local-dev-jwt-secret}
+      SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@loyalty-db:5433/${POSTGRES_DB2:-loyalty_db}
+      SQLALCHEMY_TRACK_MODIFICATIONS: "False"
+    command: ["sh", "-c", "flask --app src.app db upgrade && gunicorn -w 4 -b 0.0.0.0:5000 'src.app:create_app()'"]
+    depends_on:
+      loyalty-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:5000/health', timeout=3).read()\" || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    networks:
+      - platform
+
+  loyalty-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB2:-loyalty_db}
+      POSTGRES_PORT: 5433
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB2:-loyalty_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - loyalty_pg_data:/var/lib/postgresql/data
+    networks:
+      - platform
+
   ingress:
     image: nginx:1.27-alpine
     restart: unless-stopped
@@ -65,6 +110,8 @@ services:
         condition: service_healthy
       auth:
         condition: service_healthy
+      # loyalty:
+      #   condition: service_healthy
     ports:
       - "8080:80"
     volumes:
@@ -78,3 +125,4 @@ networks:
 
 volumes:
   auth_pg_data:
+  loyalty_pg_data:

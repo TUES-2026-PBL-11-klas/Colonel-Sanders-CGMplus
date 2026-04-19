@@ -1,0 +1,11 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loyalty
+  namespace: services
+spec:
+  template:
+    spec:
+      containers:
+        - name: loyalty
+          image: docker.io/vilibalchev5/loyalty:e77add7a81e1c0d648ffe6ece9fb0a69d3422679

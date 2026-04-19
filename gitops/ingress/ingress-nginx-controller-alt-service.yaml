@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingress-nginx-controller-alt
+  namespace: ingress-nginx
+  annotations:
+    service.beta.kubernetes.io/azure-pip-name: kubernetes-a328935a966e24aa19598096655e98ee
+    service.beta.kubernetes.io/azure-load-balancer-resource-group: MC_cgmplus-prod-rg_cgmplus-prod-aks_polandcentral
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/name: ingress-nginx
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+    - name: https
+      port: 443
+      targetPort: https
+      protocol: TCP

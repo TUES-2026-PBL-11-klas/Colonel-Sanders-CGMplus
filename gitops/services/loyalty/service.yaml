@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: loyalty-service
+  namespace: services
+  labels:
+    app: loyalty
+spec:
+  selector:
+    app: loyalty
+  ports:
+    - name: http
+      port: 5000
+      targetPort: 5000

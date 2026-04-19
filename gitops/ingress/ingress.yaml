@@ -39,3 +39,17 @@ spec:
                 name: gtfs-service
                 port:
                   number: 5000
+          - path: /api/v1/profile
+            pathType: Prefix
+            backend:
+              service:
+                name: loyalty-service
+                port:
+                  number: 5000
+          - path: /api/v1/offers
+            pathType: Prefix
+            backend:
+              service:
+                name: loyalty-service
+                port:
+                  number: 5000

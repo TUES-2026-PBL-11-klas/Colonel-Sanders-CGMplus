@@ -3,9 +3,12 @@ kind: Kustomization
 
 resources:
   - ingress/ingress.yaml
+  - ingress/ingress-nginx-controller-alt-service.yaml
   - database/auth-postgres.yaml
+  - database/loyalty-postgres.yaml
   - services/gtfs
   - services/auth
+  - services/loyalty
   - azure-secrets
 
 patches:
@@ -28,4 +31,14 @@ patches:
     target:
       kind: Deployment
       name: gtfs
+      namespace: services
+  - path: environments/prod/manifests/loyalty-image-patch.yaml
+    target:
+      kind: Deployment
+      name: loyalty
+      namespace: services
+  - path: environments/prod/manifests/loyalty-acr-pullsecret-patch.yaml
+    target:
+      kind: Deployment
+      name: loyalty
       namespace: services
