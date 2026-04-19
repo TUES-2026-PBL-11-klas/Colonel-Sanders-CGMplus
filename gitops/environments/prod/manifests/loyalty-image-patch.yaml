@@ -8,4 +8,4 @@ spec:
     spec:
       containers:
         - name: loyalty
-          image: cgmplusprod.azurecr.io/loyalty:latest
+          image: cgmplusprod.azurecr.io/loyalty:445b2f07304de9fe4f88e8867131cbcc1e3eba53

@@ -8,4 +8,4 @@ spec:
     spec:
       containers:
         - name: auth
-          image: cgmplusprod.azurecr.io/auth-new:283f8da557c459edb8d910076855a073cd25ce82
+          image: cgmplusprod.azurecr.io/auth-new:445b2f07304de9fe4f88e8867131cbcc1e3eba53
