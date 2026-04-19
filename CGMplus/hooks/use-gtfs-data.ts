@@ -12,9 +12,11 @@ let globalStops: any[] = [];
 let globalRoutes: any[] = [];
 let globalVehicles: any[] = [];
 let globalTrips: any[] = [];
+let globalAlerts: any[] = [];
 let globalSubscribers: Set<(type: string, data: any[]) => void> = new Set();
 let globalInit = false;
 let globalTimer: ReturnType<typeof setInterval> | null = null;
+let globalAlertsTimer: ReturnType<typeof setInterval> | null = null;
 
 export function useGtfsData() {
   const fetchStops = useCallback(async () => {
@@ -95,6 +97,75 @@ export function useGtfsData() {
     }
   }, []);
 
+  const fetchAlerts = useCallback(async () => {
+    const url = `${GTFS_BASE}/realtime/alerts`;
+    console.log('[GTFS-Global] Fetching alerts from:', url);
+    try {
+      const alertsResponse = await fetch(url);
+      if (!alertsResponse.ok) throw new Error(`Alerts HTTP ${alertsResponse.status}`);
+      const alertsData = await alertsResponse.json();
+      const rawAlerts = alertsData.alerts || [];
+
+      // Create route map for translating route_id to route_short_name
+      const routeMap: Record<string, string> = {};
+      if (globalRoutes.length > 0) {
+        globalRoutes.forEach((route: any) => {
+          routeMap[route.route_id] = route.route_short_name || route.route_id;
+        });
+      }
+
+      // Process alerts
+      const processedAlerts: any[] = [];
+
+      rawAlerts.forEach((alert: any) => {
+        // Get Bulgarian description
+        const descriptions = alert.description || [];
+        const bgDescription = descriptions.find((d: any) => d.language === 'bg')?.text;
+
+        if (!bgDescription) return; // Skip if no Bulgarian description
+
+        // Get affected routes
+        const affectedRoutes = new Set<string>();
+        const informedEntities = alert.informed_entities || [];
+
+        informedEntities.forEach((entity: any) => {
+          if (entity.route_id) {
+            const routeNum = routeMap[entity.route_id] || entity.route_id;
+            affectedRoutes.add(routeNum);
+          }
+        });
+
+        // Get start time for sorting
+        const activePeriods = alert.active_periods || [];
+        const startTime = activePeriods[0]?.start || 0;
+
+        if (affectedRoutes.size > 0) {
+          processedAlerts.push({
+            id: alert.id,
+            start_time: startTime,
+            routes: Array.from(affectedRoutes).sort((a, b) => {
+              // Sort route numbers numerically
+              const numA = parseInt(a, 10);
+              const numB = parseInt(b, 10);
+              if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+              return a.localeCompare(b);
+            }),
+            description: bgDescription,
+          });
+        }
+      });
+
+      // Sort by start time descending (latest first)
+      processedAlerts.sort((a, b) => b.start_time - a.start_time);
+
+      console.log('[GTFS-Global] Alerts loaded:', processedAlerts.length);
+      globalAlerts = processedAlerts;
+      globalSubscribers.forEach(cb => cb('alerts', processedAlerts));
+    } catch (e: any) {
+      console.error('[GTFS-Global] Alerts error:', e.message, '| URL:', url);
+    }
+  }, []);
+
   const init = useCallback(() => {
     // Only initialize once globally
     if (globalInit) return;
@@ -104,12 +175,17 @@ export function useGtfsData() {
     fetchStops();
     fetchRoutes();
     fetchTrips();
+    fetchAlerts();
 
     // Poll vehicles
     fetchVehicles();
     if (globalTimer) clearInterval(globalTimer);
     globalTimer = setInterval(fetchVehicles, VEHICLE_POLL_MS);
-  }, [fetchStops, fetchRoutes, fetchTrips, fetchVehicles]);
+
+    // Poll alerts every 5 minutes
+    if (globalAlertsTimer) clearInterval(globalAlertsTimer);
+    globalAlertsTimer = setInterval(fetchAlerts, 5 * 60 * 1000);
+  }, [fetchStops, fetchRoutes, fetchTrips, fetchVehicles, fetchAlerts]);
 
   // Provide a reset if auth unmounts (optional, but good for global state)
   const reset = useCallback(() => {
@@ -118,10 +194,15 @@ export function useGtfsData() {
       clearInterval(globalTimer);
       globalTimer = null;
     }
+    if (globalAlertsTimer) {
+      clearInterval(globalAlertsTimer);
+      globalAlertsTimer = null;
+    }
     globalStops = [];
     globalRoutes = [];
     globalVehicles = [];
     globalTrips = [];
+    globalAlerts = [];
   }, []);
 
   return React.useMemo(() => ({
@@ -134,6 +215,7 @@ export function useGtfsData() {
       if (globalRoutes.length > 0) callback('routes', globalRoutes);
       if (globalTrips.length > 0) callback('trips', globalTrips);
       if (globalVehicles.length > 0) callback('vehicles', globalVehicles);
+      if (globalAlerts.length > 0) callback('alerts', globalAlerts);
 
       return () => {
         globalSubscribers.delete(callback);
@@ -143,5 +225,6 @@ export function useGtfsData() {
     getRoutes: () => globalRoutes,
     getTrips: () => globalTrips,
     getVehicles: () => globalVehicles,
+    getAlerts: () => globalAlerts,
   }), [init, reset]);
 }

@@ -45,6 +45,7 @@ def apply_runtime_config(app: Flask, name: str) -> None:
         app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = os.getenv(
             "SQLALCHEMY_TRACK_MODIFICATIONS", "False"
         )
+    app.config["LOYALTY_SERVICE_URL"] = os.getenv("LOYALTY_SERVICE_URL", "http://loyalty:5000")
 
 
 class Config:
