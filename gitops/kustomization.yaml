@@ -9,6 +9,7 @@ resources:
   - services/gtfs
   - services/auth
   - services/loyalty
+  - monitoring/promtail
   - azure-secrets
 
 patches:
