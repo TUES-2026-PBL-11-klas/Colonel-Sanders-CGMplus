@@ -21,14 +21,22 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 
-import { getOverlayStyle, SHEET_HEIGHT, walletStyles} from '@/components/wallet-styles';
+import { getOverlayStyle, SHEET_HEIGHT, walletStyles } from '@/components/wallet-styles';
 
-import { MOCK_CARD, MOCK_LOYALTY } from '@/constants/mock-data';
-
-const nfcPayload = 'CGMplus-SecurePass';
-const qrValue = `${nfcPayload} | ${MOCK_CARD.number}`;
+import { useWalletData } from '@/hooks/useWalletData';
+import { API } from '@/utils/api';
+import { Alert } from 'react-native';
 
 const QR_SHEET_HEIGHT = 540;
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const formatCardNumber = (id?: string) => {
+  if (!id) return '—';
+  // Use first 16 characters for a clean 4x4 card number format, uppercase
+  const clean = id.replace(/[^0-9a-fA-F]/g, '').toUpperCase();
+  const truncated = clean.slice(0, 16);
+  return truncated.match(/.{1,4}/g)?.join(' ') || truncated;
+};
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 export default function WalletScreen() {
@@ -46,28 +54,77 @@ export default function WalletScreen() {
   const theme = Colors[colorScheme ?? 'light'];
   const isDark = colorScheme === 'dark';
 
+  const { profile, card, offers, redemptions, refresh, loading } = useWalletData();
+
+  // Keep nfcPayload in a ref so HCE always uses the latest value
+  const nfcPayloadRef = useRef<string>('CGMplus-SecurePass');
+  const nfcPayload = card?.nfc_id || 'CGMplus-SecurePass';
+  nfcPayloadRef.current = nfcPayload;
+  const qrValue = `CGMplus | ${card?.nfc_id || ''}`;
+
   // Sheet backgrounds: lighter undertone so they float above page bg
   const sheetBg = isDark ? '#26252B' : '#F2F5F9';
 
   // Progress for Tix
-  const tixProgress = Math.min(MOCK_LOYALTY.points / MOCK_LOYALTY.nextTierAt, 1);
+  const loyaltyPoints = profile?.balance ?? 0;
+  const loyaltyTier = profile?.rank || '—';
+  const NEXT_TIER_AT = 500; // Backend doesn't expose this yet; update when it does
+  const tixProgress = Math.min(loyaltyPoints / NEXT_TIER_AT, 1);
+
+  const handleRedeem = async (offerId: number, price: number) => {
+    if (loyaltyPoints < price) {
+      Alert.alert('Insufficient Points', 'You do not have enough Tix to redeem this offer.');
+      return;
+    }
+    try {
+      const res = await API.redeemOffer(offerId);
+      if (res.status === 402) {
+        Alert.alert('Payment Required', 'Insufficient loyalty balance.');
+      } else if (res.ok) {
+        Alert.alert('Success', 'Offer redeemed successfully!');
+        refresh();
+      } else {
+        Alert.alert('Error', 'Failed to redeem offer.');
+      }
+    } catch (e) {
+      Alert.alert('Error', 'An unexpected error occurred.');
+    }
+  };
 
   // ─── HCE ───────────────────────────────────────────────────────────────────
   const startHceBroadcast = async () => {
     try {
+      const payload = nfcPayloadRef.current;
       const session = await HCESession.getInstance();
-      const tag = new NFCTagType4({ type: NFCTagType4NDEFContentType.Text, content: nfcPayload, writable: false });
+      const tag = new NFCTagType4({
+        type: NFCTagType4NDEFContentType.Text,
+        content: payload,
+        writable: false,
+      });
       await session.setApplication(tag);
       await session.setEnabled(true);
-    } catch (e) { /* ignored */ }
+      console.log('[HCE] Broadcasting payload:', payload);
+    } catch (e) {
+      console.error('[HCE] Failed to start broadcast:', e);
+    }
   };
 
   const stopHceBroadcast = async () => {
     try {
       const session = await HCESession.getInstance();
       await session.setEnabled(false);
-    } catch (e) { /* ignored */ }
+      console.log('[HCE] Stopped broadcast');
+    } catch (e) {
+      console.error('[HCE] Failed to stop broadcast:', e);
+    }
   };
+
+  // Re-apply HCE tag when card data arrives while sheet is already open
+  useEffect(() => {
+    if (isNfcOpen && card?.nfc_id) {
+      startHceBroadcast();
+    }
+  }, [card?.nfc_id, isNfcOpen]);
 
   // ─── NFC Sheet ─────────────────────────────────────────────────────────────
   const openNfc = () => {
@@ -178,22 +235,22 @@ export default function WalletScreen() {
 
           {/* Card Top Row */}
           <View style={styles.cardTopRow}>
-            <Text style={styles.cardBrand}>{MOCK_CARD.type}</Text>
+            <Text style={styles.cardBrand}>CGM+ Loyalty</Text>
             <MaterialIcons name="contactless" size={28} color="rgba(255,255,255,0.85)" />
           </View>
 
           {/* Card Number – crisp & bright */}
-          <Text style={styles.cardNumber}>{MOCK_CARD.number}</Text>
+          <Text style={styles.cardNumber}>{formatCardNumber(card?.nfc_id)}</Text>
 
           {/* Card Bottom Row */}
           <View style={styles.cardBottomRow}>
             <View>
               <Text style={styles.cardLabel}>CARD HOLDER</Text>
-              <Text style={styles.cardValue}>{MOCK_CARD.holder}</Text>
+              <Text style={styles.cardValue}>{loading ? '—' : (card ? 'CGM+ Member' : 'No Card')}</Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
               <Text style={styles.cardLabel}>EXPIRES</Text>
-              <Text style={styles.cardValue}>{MOCK_CARD.expiry}</Text>
+              <Text style={styles.cardValue}>{card?.expiry_date ? new Date(card.expiry_date).toLocaleDateString() : '—'}</Text>
             </View>
           </View>
         </Pressable>
@@ -233,12 +290,12 @@ export default function WalletScreen() {
             </View>
             <View style={{ flex: 1, marginLeft: 14 }}>
               <Text style={[styles.tixPoints, { color: theme.onSurface }]}>
-                {MOCK_LOYALTY.points.toLocaleString()} <Text style={[styles.tixPtsLabel, { color: theme.onSurfaceVariant }]}>Tix</Text>
+                {loyaltyPoints.toLocaleString()} <Text style={[styles.tixPtsLabel, { color: theme.onSurfaceVariant }]}>Tix</Text>
               </Text>
-              <Text style={[styles.tixTier, { color: '#A05C00' }]}>{MOCK_LOYALTY.tier} Member</Text>
+              <Text style={[styles.tixTier, { color: '#A05C00' }]}>{loyaltyTier} Member</Text>
             </View>
             <View style={[styles.tixBadge, { backgroundColor: '#FFF3CD' }]}>
-              <Text style={styles.tixBadgeText}>{MOCK_LOYALTY.tier}</Text>
+              <Text style={styles.tixBadgeText}>{loyaltyTier}</Text>
             </View>
           </View>
 
@@ -246,7 +303,7 @@ export default function WalletScreen() {
           <View style={styles.tixProgressSection}>
             <View style={styles.tixProgressLabelRow}>
               <Text style={[styles.tixProgressLabel, { color: theme.onSurfaceVariant }]}>
-                {MOCK_LOYALTY.points} / {MOCK_LOYALTY.nextTierAt} to {MOCK_LOYALTY.nextTier}
+                {loyaltyPoints} / {NEXT_TIER_AT} to next tier
               </Text>
               <Text style={[styles.tixProgressPct, { color: '#A05C00' }]}>
                 {Math.round(tixProgress * 100)}%
@@ -257,23 +314,49 @@ export default function WalletScreen() {
             </View>
           </View>
 
+          {/* Active Offers */}
+          {offers.length > 0 && (
+            <>
+              <View style={[styles.tixDivider, { backgroundColor: theme.surfaceVariant }]} />
+              <Text style={[styles.tixHistoryTitle, { color: theme.onSurfaceVariant }]}>Active Offers</Text>
+              {offers.map((offer) => (
+                <View key={offer.id} style={styles.tixHistoryRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.tixHistoryDesc, { color: theme.onSurface }]}>{offer.name}</Text>
+                    {offer.description && <Text style={[styles.tixHistoryDate, { color: theme.onSurfaceVariant }]}>{offer.description}</Text>}
+                  </View>
+                  <Pressable
+                    onPress={() => handleRedeem(offer.id, offer.price)}
+                    style={{ backgroundColor: theme.primaryContainer, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}
+                  >
+                    <Text style={{ color: theme.onPrimaryContainer, fontWeight: '600', fontSize: 13 }}>-{offer.price} Tix</Text>
+                  </Pressable>
+                </View>
+              ))}
+            </>
+          )}
+
           {/* History */}
           <View style={[styles.tixDivider, { backgroundColor: theme.surfaceVariant }]} />
           <Text style={[styles.tixHistoryTitle, { color: theme.onSurfaceVariant }]}>Recent Activity</Text>
-          {MOCK_LOYALTY.history.map((item) => (
-            <View key={item.id} style={styles.tixHistoryRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.tixHistoryDesc, { color: theme.onSurface }]}>{item.desc}</Text>
-                <Text style={[styles.tixHistoryDate, { color: theme.onSurfaceVariant }]}>{item.date}</Text>
+          {redemptions.length > 0 ? (
+            redemptions.map((item) => (
+              <View key={item.id} style={styles.tixHistoryRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.tixHistoryDesc, { color: theme.onSurface }]}>Offer #{item.offer_id}</Text>
+                  <Text style={[styles.tixHistoryDate, { color: theme.onSurfaceVariant }]}>ID: {item.id.slice(0, 8)}</Text>
+                </View>
+                <Text style={[
+                  styles.tixHistoryPts,
+                  { color: '#B3261E' },
+                ]}>
+                  -{item.points_cost}
+                </Text>
               </View>
-              <Text style={[
-                styles.tixHistoryPts,
-                { color: item.pts > 0 ? '#16A349' : '#B3261E' },
-              ]}>
-                {item.pts > 0 ? '+' : ''}{item.pts}
-              </Text>
-            </View>
-          ))}
+            ))
+          ) : (
+            <Text style={[styles.tixHistoryDate, { color: theme.onSurfaceVariant, marginTop: 4 }]}>No redemptions yet.</Text>
+          )}
         </View>
 
       </ScrollView>
@@ -323,7 +406,7 @@ export default function WalletScreen() {
               color={'#000000'}
             />
           </View>
-          <Text style={[styles.qrCardNum, { color: isDark ? '#CAC4D0' : '#49454F' }]}>{MOCK_CARD.number}</Text>
+          <Text style={[styles.qrCardNum, { color: isDark ? '#CAC4D0' : '#49454F' }]}>{formatCardNumber(card?.nfc_id)}</Text>
           <Text style={[styles.qrCaption, { color: isDark ? '#938F99' : '#79747E' }]}>Show this code to the attendant</Text>
         </View>
       </Animated.View>
