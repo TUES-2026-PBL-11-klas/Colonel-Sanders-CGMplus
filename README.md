@@ -16,8 +16,13 @@ Python 3.12, 3.13
 Flask 3.0.2
 Marshmallow 3.21.0
 PostgreSQL 16
-ArgoCD
+ArgoCD 7.7.11
 Terraform
+Nginx-ingress 4.11.3
+kube-prometheus-stack 62.7.0
+loki 0.28.1
+external-secrets 0.10.5
+Hashicorp Vault 0.28.1
 
 ### Frontend
 Expo 54.0.33
