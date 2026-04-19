@@ -20,7 +20,7 @@ function AppShell() {
 
   // Initialize global GTFS data fetching only when authenticated
   const gtfs = useGtfsData();
-  
+
   useEffect(() => {
     if (isAuthenticated) {
       gtfs.init();

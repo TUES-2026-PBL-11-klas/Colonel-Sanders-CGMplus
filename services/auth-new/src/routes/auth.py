@@ -16,7 +16,7 @@ from src.schemas.auth_schema import (LoginSchema,
     TokenResponseSchema
 )
 
-blp = Blueprint("auth", "auth", url_prefix="/auth")
+blp = Blueprint("auth", "auth", description="Authentication endpoints.")
 
 
 def _auth_service() -> AuthService:

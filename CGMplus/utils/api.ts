@@ -9,7 +9,9 @@ const AUTH_BASE_PATH = `${API_PREFIX}/auth`;
 const USERS_BASE_PATH = `${API_PREFIX}/users`;
 const PROFILE_BASE_PATH = `${API_PREFIX}/profile`;
 const OFFERS_BASE_PATH = `${API_PREFIX}/offers`;
-const API_BASE_URL = Platform.OS === 'android' ? `http://${API_HOST}:${API_PORT}` : `http://${API_HOST}:${API_PORT}`;
+const API_BASE_URL = (API_PORT === '80' || API_PORT === '443') 
+  ? `http://${API_HOST}` 
+  : `http://${API_HOST}:${API_PORT}`;
 
 export interface AuthResponse {
   access_token: string;
@@ -46,10 +48,15 @@ class API {
       headers['Authorization'] = `Bearer ${accessToken}`;
     }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const fullUrl = `${API_BASE_URL}${endpoint}`;
+    console.log(`[API] ${options.method || 'GET'} ${fullUrl}`);
+
+    const response = await fetch(fullUrl, {
       ...options,
       headers,
     });
+
+    console.log(`[API] Response: ${response.status} ${response.statusText}`);
 
     // Handle session expiry and refresh
     if (response.status === 401 && !endpoint.includes(`${AUTH_BASE_PATH}/`)) {

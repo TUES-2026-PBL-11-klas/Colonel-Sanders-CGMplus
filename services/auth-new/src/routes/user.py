@@ -10,7 +10,7 @@ from src.repositories.user_repository import UserRepository
 from src.schemas.user_schema import PasswordChangeSchema, UserMeResponseSchema
 from src.services.security_service import SecurityService
 
-blp = Blueprint("users", "users", url_prefix="/users")
+blp = Blueprint("users", "users", description="User management endpoints.")
 
 
 @blp.route("/me")

@@ -11,7 +11,7 @@ from src.exceptions.OfferExceptions import InsufficientFunds
 from flask import jsonify
 from uuid import UUID
 
-blp = Blueprint("Offers", "offers", url_prefix="/offers")
+blp = Blueprint("Offers", "offers", description="Loyalty offers and redemptions endpoints.")
 
 
 @blp.route("/")

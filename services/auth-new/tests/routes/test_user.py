@@ -32,7 +32,7 @@ def app():
     api = Api(flask_app)
 
     from src.routes.user import blp
-    api.register_blueprint(blp)
+    api.register_blueprint(blp, url_prefix="/users")
 
     return flask_app
 

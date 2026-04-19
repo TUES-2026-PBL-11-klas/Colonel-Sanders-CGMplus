@@ -70,7 +70,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB2:-loyalty_db}
       POSTGRES_PORT: 5433
       JWT_SECRET: ${JWT_SECRET:-local-dev-jwt-secret}
-      SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@loyalty-db:5433/${POSTGRES_DB2:-loyalty_db}
+      SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@loyalty-db:5432/${POSTGRES_DB2:-loyalty_db}
       SQLALCHEMY_TRACK_MODIFICATIONS: "False"
     command: ["sh", "-c", "flask --app src.app db upgrade && gunicorn -w 4 -b 0.0.0.0:5000 'src.app:create_app()'"]
     depends_on:
