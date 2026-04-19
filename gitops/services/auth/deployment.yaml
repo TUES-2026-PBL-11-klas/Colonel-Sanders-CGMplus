@@ -26,6 +26,8 @@ spec:
               value: production
             - name: SQLALCHEMY_TRACK_MODIFICATIONS
               value: "False"
+            - name: LOYALTY_SERVICE_URL
+              value: http://loyalty-service:5000
             - name: POSTGRES_HOST
               valueFrom:
                 secretKeyRef:
