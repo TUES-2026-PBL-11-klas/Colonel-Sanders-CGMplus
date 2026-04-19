@@ -9,6 +9,10 @@ from src.repositories.role_repository import RoleRepository
 from src.models.user_model import User
 from src.exceptions.auth_exceptions import ResourceConflictError, InvalidCredentialsError
 from src.services.security_service import SecurityService
+import requests
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 _DEFAULT_ROLE_NAME = "user"
@@ -39,6 +43,24 @@ class AuthService:
             role_id=role.id,
         )
         self.user_repo.session.flush()
+
+        # Create profile in loyalty service
+        try:
+            from flask import current_app
+            loyalty_url = current_app.config.get("LOYALTY_SERVICE_URL")
+            if loyalty_url:
+                resp = requests.post(
+                    f"{loyalty_url}/internal/profile",
+                    json={"uuid": str(user.id)},
+                    timeout=5
+                )
+                if not resp.ok:
+                    logger.error(f"Failed to create loyalty profile: {resp.text}")
+            else:
+                logger.warning("LOYALTY_SERVICE_URL not configured, skipping profile creation")
+        except Exception as e:
+            logger.error(f"Error calling loyalty service: {e}")
+
         return self._issue_tokens(user)
 
     def login(self, email: str, password: str) -> dict:
