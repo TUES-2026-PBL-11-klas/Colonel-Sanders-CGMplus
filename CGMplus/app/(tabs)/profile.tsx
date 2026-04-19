@@ -33,32 +33,32 @@ export default function ProfileScreen() {
   const theme = Colors[colorScheme ?? 'light'];
 
   const handleLogout = () => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Logout', style: 'destructive', onPress: logout },
+    Alert.alert('Излез', 'Сигурен ли си, че искаш да излезеш от профила си?', [
+      { text: 'Отказ', style: 'cancel' },
+      { text: 'Излез', style: 'destructive', onPress: logout },
     ]);
   };
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) return;
     if (newPassword !== confirmPassword) {
-      Alert.alert('Passwords do not match', 'New password and confirm password must be the same.');
+      Alert.alert('Паролите не съвпадат', 'Новата парола и потвърждението трябва да са еднакви.');
       return;
     }
     setIsActionLoading(true);
     try {
       const response = await API.changePassword({ current_password: currentPassword, new_password: newPassword });
       if (response.status === 204) {
-        Alert.alert('Success', 'Password changed successfully. Please login again.', [
-          { text: 'OK', onPress: logout }
+        Alert.alert('Успех', 'Паролата беше променена успешно. Моля влез в профила си отново!', [
+          { text: 'ОК', onPress: logout }
         ]);
         setPasswordModalVisible(false);
       } else {
         const data = await response.json().catch(() => ({}));
-        Alert.alert('Error', data.message || 'Failed to change password');
+        Alert.alert('Грешка', data.message || 'Възникна грешка в сменянето на паролата');
       }
     } catch (e) {
-      Alert.alert('Error', 'Network error');
+      Alert.alert('Грешка', 'Грешка с мрежата');
     } finally {
       setIsActionLoading(false);
     }
@@ -69,14 +69,14 @@ export default function ProfileScreen() {
     try {
       const response = await API.deleteAccount();
       if (response.status === 204) {
-        Alert.alert('Account Deleted', 'Your account has been successfully deactivated.', [
-          { text: 'OK', onPress: logout }
+        Alert.alert('Изтрит акаунт', 'Вашият акаунт беше успешно деактивиран.', [
+          { text: 'ОК', onPress: logout }
         ]);
       } else {
-        Alert.alert('Error', 'Failed to delete account');
+        Alert.alert('Грешка', 'Неуспешно изтриване на акаунта');
       }
     } catch (e) {
-      Alert.alert('Error', 'Network error');
+      Alert.alert('Грешка', 'Грешка с мрежата');
     } finally {
       setIsActionLoading(false);
       setDeleteModalVisible(false);
@@ -98,13 +98,13 @@ export default function ProfileScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        
+
         <Animated.View entering={FadeInUp.delay(100).duration(600)} style={styles.header}>
-          <Text style={[styles.title, { color: theme.text }]}>Profile</Text>
-          <Text style={[styles.subtitle, { color: theme.onSurfaceVariant }]}>Manage your CGMplus account</Text>
+          <Text style={[styles.title, { color: theme.text }]}>Профил</Text>
+          <Text style={[styles.subtitle, { color: theme.onSurfaceVariant }]}>Управляване на ЦГМ+ акаунт</Text>
         </Animated.View>
 
-        <Animated.View 
+        <Animated.View
           entering={FadeInDown.delay(300).duration(600)}
           style={[styles.ticketCard, { backgroundColor: theme.surface, shadowColor: '#000' }]}
         >
@@ -126,40 +126,40 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.cardBody}>
-            <Text style={[styles.sectionTitle, { color: theme.primary }]}>Account Settings</Text>
+            <Text style={[styles.sectionTitle, { color: theme.primary }]}>Настройки на акаунт</Text>
             <View style={[styles.cardBlock, { backgroundColor: theme.surface }]}>
-              <ProfileItem 
-                icon="lock-closed" 
-                label="Change Password" 
-                onPress={() => setPasswordModalVisible(true)} 
+              <ProfileItem
+                icon="lock-closed"
+                label="Смени парола"
+                onPress={() => setPasswordModalVisible(true)}
               />
             </View>
 
-            <Text style={[styles.sectionTitle, { color: theme.primary, marginTop: 24 }]}>Support</Text>
+            <Text style={[styles.sectionTitle, { color: theme.primary, marginTop: 24 }]}>Поддръжка</Text>
             <View style={[styles.cardBlock, { backgroundColor: theme.surface }]}>
-              <ProfileItem icon="help-circle" label="Help Center" onPress={() => Linking.openURL('http://192.168.1.164/support')} />
+              <ProfileItem icon="help-circle" label="Помощен център" onPress={() => Linking.openURL('http://192.168.1.164/support')} />
               <View style={[styles.separator, { backgroundColor: theme.surfaceVariant }]} />
-              <ProfileItem icon="document-text" label="Terms of Service" onPress={() => Linking.openURL('http://192.168.1.164/terms')} />
+              <ProfileItem icon="document-text" label="Условия за ползване" onPress={() => Linking.openURL('http://192.168.1.164/terms')} />
               <View style={[styles.separator, { backgroundColor: theme.surfaceVariant }]} />
-              <ProfileItem icon="shield-checkmark" label="Privacy Policy" onPress={() => Linking.openURL('http://192.168.1.164/privacy')} />
+              <ProfileItem icon="shield-checkmark" label="Поверителност" onPress={() => Linking.openURL('http://192.168.1.164/privacy')} />
             </View>
 
             {user && (
               <>
-                <Text style={[styles.sectionTitle, { color: theme.error, marginTop: 24 }]}>Danger Zone</Text>
+                <Text style={[styles.sectionTitle, { color: theme.error, marginTop: 24 }]}>Опасна зона</Text>
                 <View style={[styles.cardBlock, { backgroundColor: theme.surface }]}>
-                  <ProfileItem 
-                    icon="log-out" 
-                    label="Logout" 
-                    color={theme.error} 
-                    onPress={handleLogout} 
+                  <ProfileItem
+                    icon="log-out"
+                    label="Излез от профила"
+                    color={theme.error}
+                    onPress={handleLogout}
                   />
                   <View style={[styles.separator, { backgroundColor: theme.surfaceVariant }]} />
-                  <ProfileItem 
-                    icon="trash" 
-                    label="Delete Account" 
-                    color={theme.error} 
-                    onPress={() => setDeleteModalVisible(true)} 
+                  <ProfileItem
+                    icon="trash"
+                    label="Изтрий акаунт"
+                    color={theme.error}
+                    onPress={() => setDeleteModalVisible(true)}
                   />
                 </View>
               </>
@@ -172,10 +172,10 @@ export default function ProfileScreen() {
       <Modal visible={passwordModalVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
-            <Text style={[styles.modalTitle, { color: theme.onSurface }]}>Change Password</Text>
+            <Text style={[styles.modalTitle, { color: theme.onSurface }]}>Промени парола</Text>
             <TextInput
               style={[styles.modalInput, { color: theme.text, borderColor: theme.outline, backgroundColor: theme.surfaceVariant }]}
-              placeholder="Current Password"
+              placeholder="Текуща парола"
               placeholderTextColor={theme.onSurfaceVariant}
               secureTextEntry
               value={currentPassword}
@@ -183,7 +183,7 @@ export default function ProfileScreen() {
             />
             <TextInput
               style={[styles.modalInput, { color: theme.text, borderColor: theme.outline, backgroundColor: theme.surfaceVariant }]}
-              placeholder="New Password"
+              placeholder="Нова парола"
               placeholderTextColor={theme.onSurfaceVariant}
               secureTextEntry
               value={newPassword}
@@ -191,25 +191,25 @@ export default function ProfileScreen() {
             />
             <TextInput
               style={[styles.modalInput, { color: theme.text, borderColor: theme.outline, backgroundColor: theme.surfaceVariant }]}
-              placeholder="Confirm New Password"
+              placeholder="Потвърди новата парола"
               placeholderTextColor={theme.onSurfaceVariant}
               secureTextEntry
               value={confirmPassword}
               onChangeText={setConfirmPassword}
             />
             <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.cancelButton, { borderColor: theme.outline }]} 
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton, { borderColor: theme.outline }]}
                 onPress={() => setPasswordModalVisible(false)}
               >
-                <Text style={[styles.cancelButtonText, { color: theme.onSurfaceVariant }]}>Cancel</Text>
+                <Text style={[styles.cancelButtonText, { color: theme.onSurfaceVariant }]}>Отказ</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.submitButton, { backgroundColor: theme.primary }]} 
+              <TouchableOpacity
+                style={[styles.modalButton, styles.submitButton, { backgroundColor: theme.primary }]}
                 onPress={handleChangePassword}
                 disabled={isActionLoading}
               >
-               {isActionLoading ? <ActivityIndicator color={theme.onPrimary} /> : <Text style={[styles.submitButtonText, { color: theme.onPrimary }]}>Update</Text>}
+               {isActionLoading ? <ActivityIndicator color={theme.onPrimary} /> : <Text style={[styles.submitButtonText, { color: theme.onPrimary }]}>Промяна</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -221,23 +221,23 @@ export default function ProfileScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
             <Ionicons name="warning" size={40} color={theme.error} style={{ alignSelf: 'center', marginBottom: 16 }} />
-            <Text style={[styles.modalTitle, { color: theme.onSurface }]}>Delete Account?</Text>
+            <Text style={[styles.modalTitle, { color: theme.onSurface }]}>Изтрий акаунт?</Text>
             <Text style={[styles.modalDescription, { color: theme.onSurfaceVariant }]}>
-              This action is permanent and will deactivate your account. All passes and data will be lost.
+              Това действие е постоянно и ще деактивира акаунта ви. Всички пропуски и данни ще бъдат загубени.
             </Text>
             <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.cancelButton, { borderColor: theme.outline }]} 
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton, { borderColor: theme.outline }]}
                 onPress={() => setDeleteModalVisible(false)}
               >
-                <Text style={[styles.cancelButtonText, { color: theme.onSurfaceVariant }]}>Keep Account</Text>
+                <Text style={[styles.cancelButtonText, { color: theme.onSurfaceVariant }]}>Отказ</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.submitButton, { backgroundColor: theme.error }]} 
+              <TouchableOpacity
+                style={[styles.modalButton, styles.submitButton, { backgroundColor: theme.error }]}
                 onPress={handleDeleteAccount}
                 disabled={isActionLoading}
               >
-               {isActionLoading ? <ActivityIndicator color="#FFF" /> : <Text style={[styles.submitButtonText, { color: '#FFF' }]}>Delete</Text>}
+               {isActionLoading ? <ActivityIndicator color="#FFF" /> : <Text style={[styles.submitButtonText, { color: '#FFF' }]}>Изтрий</Text>}
               </TouchableOpacity>
             </View>
           </View>

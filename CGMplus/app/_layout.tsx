@@ -56,11 +56,12 @@ function AppShell() {
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         <Stack.Screen name="admin" options={{ headerShown: false }} />
+        <Stack.Screen name="alerts" options={{ title: 'Маршрутни промени' }} />
       </Stack>
-      <StatusBar 
-        style={colorScheme === 'dark' ? 'light' : 'dark'} 
-        backgroundColor={theme.background} 
-        translucent={false} 
+      <StatusBar
+        style={colorScheme === 'dark' ? 'light' : 'dark'}
+        backgroundColor={theme.background}
+        translucent={false}
       />
     </>
   );

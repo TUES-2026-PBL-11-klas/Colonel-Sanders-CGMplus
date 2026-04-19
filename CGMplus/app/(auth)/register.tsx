@@ -69,10 +69,10 @@ export default function RegisterScreen() {
 
   const ValidationItem = ({ label, isValid }: { label: string, isValid: boolean }) => (
     <View style={styles.validationRow}>
-      <Ionicons 
-        name={isValid ? "checkmark-circle" : "ellipse-outline"} 
-        size={16} 
-        color={isValid ? COLORS.success : COLORS.textSecondary} 
+      <Ionicons
+        name={isValid ? "checkmark-circle" : "ellipse-outline"}
+        size={16}
+        color={isValid ? COLORS.success : COLORS.textSecondary}
       />
       <Text style={[styles.validationText, isValid ? { color: COLORS.success } : { color: COLORS.textSecondary }]}>
         {label}
@@ -87,18 +87,18 @@ export default function RegisterScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Animated.View 
+          <Animated.View
             entering={FadeInUp.delay(100).duration(600)}
             style={styles.header}
           >
             <View style={[styles.logoContainer, { backgroundColor: COLORS.primaryContainer }]}>
               <Ionicons name="card" size={36} color={COLORS.onPrimaryContainer} />
             </View>
-            <Text style={[styles.title, { color: COLORS.text }]}>New Pass</Text>
-            <Text style={[styles.subtitle, { color: COLORS.textSecondary }]}>Register for CGMplus</Text>
+            <Text style={[styles.title, { color: COLORS.text }]}>Нов пропуск</Text>
+            <Text style={[styles.subtitle, { color: COLORS.textSecondary }]}>Регистрирай се за ЦГМ+</Text>
           </Animated.View>
 
-          <Animated.View 
+          <Animated.View
             entering={FadeInDown.delay(250).duration(600)}
             style={[styles.ticketCard, { backgroundColor: COLORS.surface }]}
           >
@@ -108,7 +108,7 @@ export default function RegisterScreen() {
                 style={styles.cardGraphic}
               />
               <View style={styles.cardGraphicOverlay}>
-                <Text style={styles.graphicText}>Activate Account</Text>
+                <Text style={styles.graphicText}>Активирай акаунт</Text>
                 <Ionicons name="scan" size={24} color="#FFF" style={styles.nfcIcon} />
               </View>
             </View>
@@ -124,7 +124,7 @@ export default function RegisterScreen() {
               <View style={[styles.inputWrapper, { borderColor: COLORS.outline }]}>
                 <TextInput
                   style={[styles.input, { color: COLORS.text }]}
-                  placeholder="Email Address"
+                  placeholder="Имейл адрес"
                   placeholderTextColor={COLORS.textSecondary}
                   value={email}
                   onChangeText={(text) => {
@@ -139,7 +139,7 @@ export default function RegisterScreen() {
               <View style={[styles.inputWrapper, { borderColor: COLORS.outline, marginTop: 16 }]}>
                 <TextInput
                   style={[styles.input, { color: COLORS.text }]}
-                  placeholder="Password"
+                  placeholder="Парола"
                   placeholderTextColor={COLORS.textSecondary}
                   value={password}
                   onChangeText={setPassword}
@@ -149,16 +149,16 @@ export default function RegisterScreen() {
               </View>
 
               <View style={[styles.validationContainer, { backgroundColor: COLORS.surfaceVariant }]}>
-                <ValidationItem label="8-72 characters" isValid={validation.length} />
-                <ValidationItem label="One uppercase letter" isValid={validation.uppercase} />
-                <ValidationItem label="One digit" isValid={validation.digit} />
-                <ValidationItem label="One special character (!@#$%^&*)" isValid={validation.special} />
+                <ValidationItem label="8-72 символа" isValid={validation.length} />
+                <ValidationItem label="Една главна буква" isValid={validation.uppercase} />
+                <ValidationItem label="Една цифра" isValid={validation.digit} />
+                <ValidationItem label="Един специален символ (!@#$%^&*)" isValid={validation.special} />
               </View>
 
               <View style={[styles.inputWrapper, { borderColor: COLORS.outline, marginTop: 8 }]}>
                 <TextInput
                   style={[styles.input, { color: COLORS.text }]}
-                  placeholder="Confirm Password"
+                  placeholder="Потвърди паролата"
                   placeholderTextColor={COLORS.textSecondary}
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
@@ -168,29 +168,29 @@ export default function RegisterScreen() {
               </View>
 
               {confirmPassword !== '' && !passwordsMatch && (
-                <Text style={[styles.validationError, { color: COLORS.error }]}>Passwords do not match</Text>
+                <Text style={[styles.validationError, { color: COLORS.error }]}>Паролите не съвпадат</Text>
               )}
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[
-                  styles.button, 
+                  styles.button,
                   { backgroundColor: COLORS.primary },
                   (isLoading || !isPasswordValid || !passwordsMatch) && { backgroundColor: COLORS.outline }
-                ]} 
+                ]}
                 onPress={handleRegister}
                 disabled={isLoading || !isPasswordValid || !passwordsMatch}
               >
                 {isLoading ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.buttonText}>Sign Up</Text>
+                  <Text style={styles.buttonText}>Регистрирай се</Text>
                 )}
               </TouchableOpacity>
 
               <View style={styles.footer}>
-                <Text style={[styles.footerText, { color: COLORS.textSecondary }]}>Already have a pass? </Text>
+                <Text style={[styles.footerText, { color: COLORS.textSecondary }]}>Вече имаш акаунт? </Text>
                 <TouchableOpacity onPress={() => router.back()}>
-                  <Text style={[styles.linkText, { color: COLORS.primary }]}>Sign In</Text>
+                  <Text style={[styles.linkText, { color: COLORS.primary }]}>Влез</Text>
                 </TouchableOpacity>
               </View>
             </View>
