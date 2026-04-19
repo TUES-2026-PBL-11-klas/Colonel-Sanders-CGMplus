@@ -8,4 +8,4 @@ spec:
     spec:
       containers:
         - name: loyalty
-          image: docker.io/vilibalchev5/loyalty:1773ae38f7b841a72fde8f8893233995964ecf09
+          image: docker.io/vilibalchev5/loyalty:5f97218a40724f709580bba8ae60a93a6cfc5fd1
