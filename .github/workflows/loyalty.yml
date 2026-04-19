@@ -40,7 +40,7 @@ jobs:
       POSTGRES_USER: ci_user
       POSTGRES_PASSWORD: ci_password
       POSTGRES_DB: ci_loyalty_db
-      DB_URL: postgresql+psycopg2://ci_user:ci_password@localhost:5432/ci_loyalty_db
+      DB_URL: postgresql+psycopg://ci_user:ci_password@localhost:5432/ci_loyalty_db
       POSTGRES_PORT: 5432
       FLASK_ENV: testing
       JWT_SECRET: test-jwt-secret
