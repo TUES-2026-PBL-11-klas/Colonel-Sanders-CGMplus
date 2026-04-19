@@ -8,4 +8,4 @@ spec:
     spec:
       containers:
         - name: gtfs
-          image: cgmplusprod.azurecr.io/gtfs:fcf9aa317fc147884cacf6f090be449a1da1bd3a
+          image: cgmplusprod.azurecr.io/gtfs:b331d9de7aec0fe8bec854b7002f10ae527bfcf3
