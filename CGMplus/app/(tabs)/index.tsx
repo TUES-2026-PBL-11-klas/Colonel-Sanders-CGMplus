@@ -144,8 +144,8 @@ export default function HomeScreen() {
           <View style={[styles.logoContainer, { backgroundColor: theme.primaryContainer }]}>
             <Ionicons name="home" size={36} color={theme.onPrimaryContainer} />
           </View>
-          <Text style={[styles.title, { color: theme.text }]}>Dashboard</Text>
-          <Text style={[styles.subtitle, { color: theme.onSurfaceVariant }]}>Welcome to CGMplus</Text>
+          <Text style={[styles.title, { color: theme.text }]}>Главно табло</Text>
+          <Text style={[styles.subtitle, { color: theme.onSurfaceVariant }]}>Добре дошли в ЦГМ+</Text>
         </Animated.View>
 
         <Animated.View
@@ -158,7 +158,7 @@ export default function HomeScreen() {
               style={styles.cardGraphic}
             />
             <View style={styles.cardGraphicOverlay}>
-              <Text style={styles.graphicText}>Overview</Text>
+              <Text style={styles.graphicText}>Преглед</Text>
               <Ionicons name="stats-chart" size={24} color="#FFF" style={styles.nfcIcon} />
             </View>
           </View>
@@ -178,9 +178,9 @@ export default function HomeScreen() {
               <View style={[styles.validationContainer, { backgroundColor: theme.primaryContainer }]}>
                 <Ionicons name="checkmark-circle" size={24} color={theme.primary} />
                 <View style={styles.validationTextGroup}>
-                  <Text style={[styles.validationTitle, { color: theme.onPrimaryContainer }]}>Active Session</Text>
+                  <Text style={[styles.validationTitle, { color: theme.onPrimaryContainer }]}>Активна сесия</Text>
                   <Text style={[styles.validationDesc, { color: theme.onPrimaryContainer, opacity: 0.8 }]}>
-                    Your digital pass and features are ready to use.
+                    Твоят дигитален пропуск и функциите са готови за използване.
                   </Text>
                 </View>
               </View>
@@ -192,22 +192,42 @@ export default function HomeScreen() {
                   style={[styles.button, { backgroundColor: theme.primary }]}
                   onPress={() => router.push('/(auth)/login' as any)}
                 >
-                  <Text style={styles.buttonText}>Log In</Text>
+                  <Text style={styles.buttonText}>Влез</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.button, styles.buttonOutlined, { borderColor: theme.outline }]}
                   onPress={() => router.push('/(auth)/register' as any)}
                 >
-                  <Text style={[styles.buttonTextOutlined, { color: theme.primary }]}>Register</Text>
+                  <Text style={[styles.buttonTextOutlined, { color: theme.primary }]}>Регистрирай се</Text>
                 </TouchableOpacity>
               </View>
             )}
           </View>
         </Animated.View>
 
+        <Animated.View entering={FadeInDown.delay(400).duration(600)} style={{ marginTop: 24 }}>
+          <Text style={[styles.sectionTitle, { color: theme.onSurfaceVariant }]}>Информация</Text>
+          <View style={{ gap: 12 }}>
+              <TouchableOpacity
+              onPress={() => router.push('/alerts' as any)}
+              style={[styles.miniCard, { backgroundColor: theme.surface }]}
+            >
+              <View style={[styles.miniIconBg, { backgroundColor: theme.primaryContainer }]}>
+                <Ionicons name="alert-circle" size={22} color={theme.onPrimaryContainer} />
+              </View>
+              <View style={styles.miniCardContent}>
+                <Text style={[styles.miniCardText, { color: theme.onSurface }]}>Маршрутни промени</Text>
+                <Text style={[styles.miniCardSub, { color: theme.onSurfaceVariant }]}>Виж последна информация за линиите</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={theme.outline} />
+            </TouchableOpacity>
+
+          </View>
+          </ Animated.View>
+
         {/* Quick Actions */}
         <Animated.View entering={FadeInDown.delay(400).duration(600)} style={{ marginTop: 24 }}>
-          <Text style={[styles.sectionTitle, { color: theme.onSurfaceVariant }]}>Quick Actions</Text>
+          <Text style={[styles.sectionTitle, { color: theme.onSurfaceVariant }]}>Бързи действия</Text>
           <View style={{ gap: 12 }}>
 
             {/* Show QR Pass */}
@@ -219,8 +239,8 @@ export default function HomeScreen() {
                 <Ionicons name="qr-code-outline" size={22} color={theme.onPrimaryContainer} />
               </View>
               <View style={styles.miniCardContent}>
-                <Text style={[styles.miniCardText, { color: theme.onSurface }]}>Show QR Pass</Text>
-                <Text style={[styles.miniCardSub, { color: theme.onSurfaceVariant }]}>Scan at transit gates</Text>
+                <Text style={[styles.miniCardText, { color: theme.onSurface }]}>Покажи QR Пропуск</Text>
+                <Text style={[styles.miniCardSub, { color: theme.onSurfaceVariant }]}>Сканирай при транспортни врати</Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={theme.outline} />
             </TouchableOpacity>
@@ -234,8 +254,8 @@ export default function HomeScreen() {
                 <MaterialIcons name="contactless" size={22} color={theme.onPrimaryContainer} />
               </View>
               <View style={styles.miniCardContent}>
-                <Text style={[styles.miniCardText, { color: theme.onSurface }]}>Scan NFC Pass</Text>
-                <Text style={[styles.miniCardSub, { color: theme.onSurfaceVariant }]}>Tap your phone to a reader</Text>
+                <Text style={[styles.miniCardText, { color: theme.onSurface }]}>Сканирай NFC Пропуск</Text>
+                <Text style={[styles.miniCardSub, { color: theme.onSurfaceVariant }]}>Докоснете телефона си до четец</Text>
               </View>
               <MaterialIcons name="contactless" size={18} color={theme.outline} />
             </TouchableOpacity>
@@ -249,7 +269,7 @@ export default function HomeScreen() {
                 <Ionicons name="star-outline" size={22} color="#A05C00" />
               </View>
               <View style={styles.miniCardContent}>
-                <Text style={[styles.miniCardText, { color: theme.onSurface }]}>My Tix</Text>
+                <Text style={[styles.miniCardText, { color: theme.onSurface }]}>Моите Tix</Text>
                 <Text style={[styles.miniCardSub, { color: '#A05C00', fontWeight: '700' }]}>
                   {MOCK_LOYALTY.points.toLocaleString()} Tix
                 </Text>
@@ -266,9 +286,9 @@ export default function HomeScreen() {
                 <Ionicons name="ticket-outline" size={22} color="#512DA8" />
               </View>
               <View style={styles.miniCardContent}>
-                <Text style={[styles.miniCardText, { color: theme.onSurface }]}>My Tickets</Text>
+                <Text style={[styles.miniCardText, { color: theme.onSurface }]}>Моите билети</Text>
                 <Text style={[styles.miniCardSub, { color: theme.onSurfaceVariant }]}>
-                  {MOCK_TICKETS.filter(t => t.status === 'Active').length} active passes
+                  {MOCK_TICKETS.filter(t => t.status === 'Active').length} активни билета
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={theme.outline} />
@@ -283,8 +303,8 @@ export default function HomeScreen() {
                 <Ionicons name="map-outline" size={22} color="#880E4F" />
               </View>
               <View style={styles.miniCardContent}>
-                <Text style={[styles.miniCardText, { color: theme.onSurface }]}>Trip Planner</Text>
-                <Text style={[styles.miniCardSub, { color: theme.onSurfaceVariant }]}>Plan your commute</Text>
+                <Text style={[styles.miniCardText, { color: theme.onSurface }]}>Карта</Text>
+                <Text style={[styles.miniCardSub, { color: theme.onSurfaceVariant }]}>Разгледайте картата</Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={theme.outline} />
             </TouchableOpacity>

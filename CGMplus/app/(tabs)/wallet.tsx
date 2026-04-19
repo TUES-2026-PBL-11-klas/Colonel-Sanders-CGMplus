@@ -73,21 +73,21 @@ export default function WalletScreen() {
 
   const handleRedeem = async (offerId: number, price: number) => {
     if (loyaltyPoints < price) {
-      Alert.alert('Insufficient Points', 'You do not have enough Tix to redeem this offer.');
+      Alert.alert('Недостатъчно Tix', 'Нямаш достатъчно Tix за да валидирате на тази оферта.');
       return;
     }
     try {
       const res = await API.redeemOffer(offerId);
       if (res.status === 402) {
-        Alert.alert('Payment Required', 'Insufficient loyalty balance.');
+        Alert.alert('Нужно е заплащане', 'Нямаш достатъчно Tix за да валидирате на тази оферта.');
       } else if (res.ok) {
-        Alert.alert('Success', 'Offer redeemed successfully!');
+        Alert.alert('Успех', 'Офертата е валидирана успешно!');
         refresh();
       } else {
-        Alert.alert('Error', 'Failed to redeem offer.');
+        Alert.alert('Грешка', 'Не успяхме да валидираме офертата.');
       }
     } catch (e) {
-      Alert.alert('Error', 'An unexpected error occurred.');
+      Alert.alert('Грешка', 'Възникна неочаквана грешка.');
     }
   };
 
@@ -218,7 +218,7 @@ export default function WalletScreen() {
 
         {/* Header */}
         <View style={styles.headerRow}>
-          <ThemedText type="title">Wallet</ThemedText>
+          <ThemedText type="title">Портфейл</ThemedText>
         </View>
 
         {/* ── CARD ──────────────────────────────────────────────────────── */}
@@ -235,7 +235,7 @@ export default function WalletScreen() {
 
           {/* Card Top Row */}
           <View style={styles.cardTopRow}>
-            <Text style={styles.cardBrand}>CGM+ Loyalty</Text>
+            <Text style={styles.cardBrand}>ЦГМ+ лоялност</Text>
             <MaterialIcons name="contactless" size={28} color="rgba(255,255,255,0.85)" />
           </View>
 
@@ -245,11 +245,11 @@ export default function WalletScreen() {
           {/* Card Bottom Row */}
           <View style={styles.cardBottomRow}>
             <View>
-              <Text style={styles.cardLabel}>CARD HOLDER</Text>
-              <Text style={styles.cardValue}>{loading ? '—' : (card ? 'CGM+ Member' : 'No Card')}</Text>
+              <Text style={styles.cardLabel}>СОБСТВЕНИК НА КАРТА</Text>
+              <Text style={styles.cardValue}>{loading ? '—' : (card ? 'ЦГМ+ потребител' : 'Няма карта')}</Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.cardLabel}>EXPIRES</Text>
+              <Text style={styles.cardLabel}>ИЗТИЧА</Text>
               <Text style={styles.cardValue}>{card?.expiry_date ? new Date(card.expiry_date).toLocaleDateString() : '—'}</Text>
             </View>
           </View>
@@ -257,7 +257,7 @@ export default function WalletScreen() {
 
         <Text style={[styles.instructionHint, { color: theme.onSurfaceVariant }]}>
           <MaterialIcons name="contactless" size={16} color={theme.onSurfaceVariant} />
-          {' '}Tap card to use NFC
+          {' '}Натисни картата за да използваш NFC
         </Text>
 
         {/* ── ACTION ROW ─────────────────────────────────────────────────── */}
@@ -267,7 +267,7 @@ export default function WalletScreen() {
             style={({ pressed }) => [styles.actionBtn, { backgroundColor: theme.primaryContainer, opacity: pressed ? 0.7 : 1 }]}
           >
             <MaterialIcons name="qr-code" size={22} color={theme.onPrimaryContainer} />
-            <Text style={[styles.actionBtnText, { color: theme.onPrimaryContainer }]}>QR Pass</Text>
+            <Text style={[styles.actionBtnText, { color: theme.onPrimaryContainer }]}>QR код</Text>
           </Pressable>
 
           <Pressable
@@ -281,7 +281,7 @@ export default function WalletScreen() {
 
 
         {/* ── TIX LOYALTY SECTION ───────────────────────────────────────── */}
-        <Text style={[styles.heading, { color: theme.onSurfaceVariant }]}>Tix Loyalty Points</Text>
+        <Text style={[styles.heading, { color: theme.onSurfaceVariant }]}>Tix Лоялни Точки</Text>
         <View style={[styles.tixCard, { backgroundColor: theme.surface }]}>
           {/* Top */}
           <View style={styles.tixTopRow}>
@@ -292,7 +292,7 @@ export default function WalletScreen() {
               <Text style={[styles.tixPoints, { color: theme.onSurface }]}>
                 {loyaltyPoints.toLocaleString()} <Text style={[styles.tixPtsLabel, { color: theme.onSurfaceVariant }]}>Tix</Text>
               </Text>
-              <Text style={[styles.tixTier, { color: '#A05C00' }]}>{loyaltyTier} Member</Text>
+              <Text style={[styles.tixTier, { color: '#A05C00' }]}>{loyaltyTier} член</Text>
             </View>
             <View style={[styles.tixBadge, { backgroundColor: '#FFF3CD' }]}>
               <Text style={styles.tixBadgeText}>{loyaltyTier}</Text>
@@ -303,7 +303,7 @@ export default function WalletScreen() {
           <View style={styles.tixProgressSection}>
             <View style={styles.tixProgressLabelRow}>
               <Text style={[styles.tixProgressLabel, { color: theme.onSurfaceVariant }]}>
-                {loyaltyPoints} / {NEXT_TIER_AT} to next tier
+                {loyaltyPoints} / {NEXT_TIER_AT} към следващия ниво
               </Text>
               <Text style={[styles.tixProgressPct, { color: '#A05C00' }]}>
                 {Math.round(tixProgress * 100)}%
@@ -318,7 +318,7 @@ export default function WalletScreen() {
           {offers.length > 0 && (
             <>
               <View style={[styles.tixDivider, { backgroundColor: theme.surfaceVariant }]} />
-              <Text style={[styles.tixHistoryTitle, { color: theme.onSurfaceVariant }]}>Active Offers</Text>
+              <Text style={[styles.tixHistoryTitle, { color: theme.onSurfaceVariant }]}>Активни оферти</Text>
               {offers.map((offer) => (
                 <View key={offer.id} style={styles.tixHistoryRow}>
                   <View style={{ flex: 1 }}>
@@ -338,12 +338,12 @@ export default function WalletScreen() {
 
           {/* History */}
           <View style={[styles.tixDivider, { backgroundColor: theme.surfaceVariant }]} />
-          <Text style={[styles.tixHistoryTitle, { color: theme.onSurfaceVariant }]}>Recent Activity</Text>
+          <Text style={[styles.tixHistoryTitle, { color: theme.onSurfaceVariant }]}>Последна активност</Text>
           {redemptions.length > 0 ? (
             redemptions.map((item) => (
               <View key={item.id} style={styles.tixHistoryRow}>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.tixHistoryDesc, { color: theme.onSurface }]}>Offer #{item.offer_id}</Text>
+                  <Text style={[styles.tixHistoryDesc, { color: theme.onSurface }]}>Оферта #{item.offer_id}</Text>
                   <Text style={[styles.tixHistoryDate, { color: theme.onSurfaceVariant }]}>ID: {item.id.slice(0, 8)}</Text>
                 </View>
                 <Text style={[
@@ -355,7 +355,7 @@ export default function WalletScreen() {
               </View>
             ))
           ) : (
-            <Text style={[styles.tixHistoryDate, { color: theme.onSurfaceVariant, marginTop: 4 }]}>No redemptions yet.</Text>
+            <Text style={[styles.tixHistoryDate, { color: theme.onSurfaceVariant, marginTop: 4 }]}>Все още няма валидирания.</Text>
           )}
         </View>
 
@@ -385,8 +385,8 @@ export default function WalletScreen() {
           <View style={[walletStyles.nfcScanningCircle, { backgroundColor: theme.primaryContainer }]}>
             <MaterialIcons name="contactless" size={48} color={theme.onPrimaryContainer} />
           </View>
-          <Text style={[walletStyles.sheetText, { color: isDark ? '#E6E1E5' : '#1C1B1F' }]}>Ready to Scan</Text>
-          <Text style={[walletStyles.sheetCaption, { color: isDark ? '#938F99' : '#79747E' }]}>Hold near the transit reader</Text>
+          <Text style={[walletStyles.sheetText, { color: isDark ? '#E6E1E5' : '#1C1B1F' }]}>Готов за сканиране</Text>
+          <Text style={[walletStyles.sheetCaption, { color: isDark ? '#938F99' : '#79747E' }]}>Задръж близо до четец</Text>
         </View>
       </Animated.View>
 
@@ -407,7 +407,7 @@ export default function WalletScreen() {
             />
           </View>
           <Text style={[styles.qrCardNum, { color: isDark ? '#CAC4D0' : '#49454F' }]}>{formatCardNumber(card?.nfc_id)}</Text>
-          <Text style={[styles.qrCaption, { color: isDark ? '#938F99' : '#79747E' }]}>Show this code to the attendant</Text>
+          <Text style={[styles.qrCaption, { color: isDark ? '#938F99' : '#79747E' }]}>Покажи този код на кондуктора</Text>
         </View>
       </Animated.View>
     </ThemedView>

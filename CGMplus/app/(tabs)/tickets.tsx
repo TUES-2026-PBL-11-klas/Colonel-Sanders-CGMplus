@@ -15,8 +15,8 @@ export default function TicketsScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
 
         <Animated.View entering={FadeInUp.delay(100).duration(600)} style={styles.header}>
-          <Text style={[styles.title, { color: theme.text }]}>My Tickets</Text>
-          <Text style={[styles.subtitle, { color: theme.onSurfaceVariant }]}>Active passes and trips</Text>
+          <Text style={[styles.title, { color: theme.text }]}>Моите билети</Text>
+          <Text style={[styles.subtitle, { color: theme.onSurfaceVariant }]}>Активни карти и пътувания</Text>
         </Animated.View>
 
         {MOCK_TICKETS.map((ticket: Ticket, index: number) => (
@@ -43,7 +43,7 @@ export default function TicketsScreen() {
 
               <View style={styles.ticketBody}>
                 <View style={styles.infoRow}>
-                  <Text style={[styles.infoLabel, { color: theme.onSurfaceVariant }]}>Status</Text>
+                  <Text style={[styles.infoLabel, { color: theme.onSurfaceVariant }]}>Статус</Text>
                   <Text style={[
                       styles.infoValue,
                       { color: ticket.status === 'Active' ? theme.mint : theme.primary }
@@ -52,7 +52,7 @@ export default function TicketsScreen() {
                   </Text>
                 </View>
                 <View style={styles.infoRow}>
-                  <Text style={[styles.infoLabel, { color: theme.onSurfaceVariant }]}>Valid Until</Text>
+                  <Text style={[styles.infoLabel, { color: theme.onSurfaceVariant }]}>Валидно до</Text>
                   <Text style={[styles.infoValue, { color: theme.onSurface }]}>{ticket.expiry}</Text>
                 </View>
               </View>
@@ -66,7 +66,7 @@ export default function TicketsScreen() {
         <Animated.View entering={FadeInDown.delay(300).duration(600)} style={styles.actionContainer}>
            <TouchableOpacity style={[styles.buyButton, { backgroundColor: theme.primaryContainer }]}>
              <Ionicons name="add" size={24} color={theme.onPrimaryContainer} />
-             <Text style={[styles.buyButtonText, { color: theme.onPrimaryContainer }]}>Buy New Ticket</Text>
+             <Text style={[styles.buyButtonText, { color: theme.onPrimaryContainer }]}>Купи Нов Билет</Text>
            </TouchableOpacity>
         </Animated.View>
 
