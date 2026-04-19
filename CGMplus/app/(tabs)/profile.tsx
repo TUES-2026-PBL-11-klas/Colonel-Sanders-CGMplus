@@ -27,6 +27,7 @@ export default function ProfileScreen() {
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
@@ -39,7 +40,11 @@ export default function ProfileScreen() {
   };
 
   const handleChangePassword = async () => {
-    if (!currentPassword || !newPassword) return;
+    if (!currentPassword || !newPassword || !confirmPassword) return;
+    if (newPassword !== confirmPassword) {
+      Alert.alert('Passwords do not match', 'New password and confirm password must be the same.');
+      return;
+    }
     setIsActionLoading(true);
     try {
       const response = await API.changePassword({ current_password: currentPassword, new_password: newPassword });
@@ -183,6 +188,14 @@ export default function ProfileScreen() {
               secureTextEntry
               value={newPassword}
               onChangeText={setNewPassword}
+            />
+            <TextInput
+              style={[styles.modalInput, { color: theme.text, borderColor: theme.outline, backgroundColor: theme.surfaceVariant }]}
+              placeholder="Confirm New Password"
+              placeholderTextColor={theme.onSurfaceVariant}
+              secureTextEntry
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
             />
             <View style={styles.modalButtons}>
               <TouchableOpacity 

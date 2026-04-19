@@ -7,6 +7,8 @@ const API_PREFIX_RAW = process.env.EXPO_PUBLIC_API_PREFIX || '/api/v1';
 const API_PREFIX = API_PREFIX_RAW.startsWith('/') ? API_PREFIX_RAW : `/${API_PREFIX_RAW}`;
 const AUTH_BASE_PATH = `${API_PREFIX}/auth`;
 const USERS_BASE_PATH = `${API_PREFIX}/users`;
+const PROFILE_BASE_PATH = `${API_PREFIX}/profile`;
+const OFFERS_BASE_PATH = `${API_PREFIX}/offers`;
 const API_BASE_URL = Platform.OS === 'android' ? `http://${API_HOST}:${API_PORT}` : `http://${API_HOST}:${API_PORT}`;
 
 export interface AuthResponse {
@@ -117,6 +119,29 @@ class API {
     return this.request(`${USERS_BASE_PATH}/me`, {
       method: 'DELETE',
     });
+  }
+
+  // Loyalty & Wallet endpoints
+  static async getProfileSummary(): Promise<Response> {
+    return this.request(`${PROFILE_BASE_PATH}/me`);
+  }
+
+  static async getCardDetails(): Promise<Response> {
+    return this.request(`${PROFILE_BASE_PATH}/card`);
+  }
+
+  static async getActiveOffers(): Promise<Response> {
+    return this.request(`${OFFERS_BASE_PATH}/`);
+  }
+
+  static async redeemOffer(offerId: number): Promise<Response> {
+    return this.request(`${OFFERS_BASE_PATH}/${offerId}/redemption`, {
+      method: 'POST',
+    });
+  }
+
+  static async getRedemptionHistory(): Promise<Response> {
+    return this.request(`${OFFERS_BASE_PATH}/redemptions`);
   }
 }
 
