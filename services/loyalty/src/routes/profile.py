@@ -8,7 +8,7 @@ from src.repositories.ProfileRepositority import ProfileRepository
 from src.extensions import db
 from uuid import UUID
 
-blp = Blueprint("profile", "profile", url_prefix="/profile")
+blp = Blueprint("profile", "profile", description="User profile and card endpoints.")
 
 
 @blp.route("/me")
