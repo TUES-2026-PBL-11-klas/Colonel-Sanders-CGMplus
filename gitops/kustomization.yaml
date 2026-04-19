@@ -1,0 +1,44 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ingress/ingress.yaml
+  - ingress/ingress-nginx-controller-alt-service.yaml
+  - database/auth-postgres.yaml
+  - database/loyalty-postgres.yaml
+  - services/gtfs
+  - services/auth
+  - services/loyalty
+  - azure-secrets
+
+patches:
+  - path: environments/prod/manifests/auth-image-patch.yaml
+    target:
+      kind: Deployment
+      name: auth
+      namespace: services
+  - path: environments/prod/manifests/gtfs-image-patch.yaml
+    target:
+      kind: Deployment
+      name: gtfs
+      namespace: services
+  - path: environments/prod/manifests/auth-acr-pullsecret-patch.yaml
+    target:
+      kind: Deployment
+      name: auth
+      namespace: services
+  - path: environments/prod/manifests/gtfs-acr-pullsecret-patch.yaml
+    target:
+      kind: Deployment
+      name: gtfs
+      namespace: services
+  - path: environments/prod/manifests/loyalty-image-patch.yaml
+    target:
+      kind: Deployment
+      name: loyalty
+      namespace: services
+  - path: environments/prod/manifests/loyalty-acr-pullsecret-patch.yaml
+    target:
+      kind: Deployment
+      name: loyalty
+      namespace: services
