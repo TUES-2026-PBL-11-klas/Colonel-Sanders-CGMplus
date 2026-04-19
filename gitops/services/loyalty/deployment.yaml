@@ -52,7 +52,7 @@ spec:
                   name: loyalty-app-secrets
                   key: JWT_SECRET
             - name: DB_URL
-              value: postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@loyalty-postgres:$(POSTGRES_PORT)/$(POSTGRES_DB)
+              value: postgresql+psycopg://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@loyalty-postgres:$(POSTGRES_PORT)/$(POSTGRES_DB)
           resources:
             requests:
               cpu: 100m
