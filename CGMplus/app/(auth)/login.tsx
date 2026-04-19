@@ -52,7 +52,7 @@ export default function LoginScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.content}
       >
-        <Animated.View 
+        <Animated.View
           entering={FadeInUp.delay(100).duration(600)}
           style={styles.header}
         >
@@ -60,11 +60,11 @@ export default function LoginScreen() {
           <View style={[styles.logoContainer, { backgroundColor: COLORS.primaryContainer }]}>
             <Ionicons name="bus" size={36} color={COLORS.onPrimaryContainer} />
           </View>
-          <Text style={[styles.title, { color: COLORS.text }]}>CGMplus</Text>
-          <Text style={[styles.subtitle, { color: COLORS.textSecondary }]}>Your Digital Transit Pass</Text>
+          <Text style={[styles.title, { color: COLORS.text }]}>ЦГМ+</Text>
+          <Text style={[styles.subtitle, { color: COLORS.textSecondary }]}>Единно приложение за градски транспорт</Text>
         </Animated.View>
 
-        <Animated.View 
+        <Animated.View
           entering={FadeInDown.delay(250).duration(600)}
           style={[styles.ticketCard, { backgroundColor: COLORS.surface }]}
         >
@@ -75,7 +75,7 @@ export default function LoginScreen() {
               style={styles.cardGraphic}
             />
             <View style={styles.cardGraphicOverlay}>
-              <Text style={styles.graphicText}>Sign in to access</Text>
+              <Text style={styles.graphicText}>Влезте за да получите достъп</Text>
               <Ionicons name="scan" size={24} color="#FFF" style={styles.nfcIcon} />
             </View>
           </View>
@@ -91,7 +91,7 @@ export default function LoginScreen() {
             <View style={[styles.inputWrapper, { borderColor: COLORS.outline }]}>
               <TextInput
                 style={[styles.input, { color: COLORS.text }]}
-                placeholder="Email Address"
+                placeholder="Имейл адрес"
                 placeholderTextColor={COLORS.textSecondary}
                 value={email}
                 onChangeText={(text) => {
@@ -106,7 +106,7 @@ export default function LoginScreen() {
             <View style={[styles.inputWrapper, { borderColor: COLORS.outline, marginTop: 16 }]}>
               <TextInput
                 style={[styles.input, { color: COLORS.text }]}
-                placeholder="Password"
+                placeholder="Парола"
                 placeholderTextColor={COLORS.textSecondary}
                 value={password}
                 onChangeText={(text) => {
@@ -118,26 +118,26 @@ export default function LoginScreen() {
               />
             </View>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[
-                styles.button, 
+                styles.button,
                 { backgroundColor: COLORS.primary },
                 isLoading && styles.buttonDisabled
-              ]} 
+              ]}
               onPress={handleLogin}
               disabled={isLoading}
             >
               {isLoading ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={styles.buttonText}>Sign In</Text>
+                <Text style={styles.buttonText}>Влез</Text>
               )}
             </TouchableOpacity>
 
             <View style={styles.footer}>
-              <Text style={[styles.footerText, { color: COLORS.textSecondary }]}>Need a pass? </Text>
+              <Text style={[styles.footerText, { color: COLORS.textSecondary }]}>Нямаш акаунт? </Text>
               <TouchableOpacity onPress={() => router.push('/(auth)/register' as any)}>
-                <Text style={[styles.linkText, { color: COLORS.primary }]}>Create Account</Text>
+                <Text style={[styles.linkText, { color: COLORS.primary }]}>Създай акаунт</Text>
               </TouchableOpacity>
             </View>
           </View>
