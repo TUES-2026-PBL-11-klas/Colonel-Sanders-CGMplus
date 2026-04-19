@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - clustersecretstore.yaml
   - externalsecret-auth.yaml
+  - externalsecret-loyalty.yaml
