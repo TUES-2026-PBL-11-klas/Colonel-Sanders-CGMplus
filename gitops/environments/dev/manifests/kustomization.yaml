@@ -4,10 +4,13 @@ kind: Kustomization
 resources:
   - ../../../ingress/ingress.yaml
   - ../../../database/auth-postgres.yaml
+  - ../../../database/loyalty-postgres.yaml
   - ../../../services/gtfs
   - ../../../services/auth
+  - ../../../services/loyalty
   - ../../../vault
 
 patchesStrategicMerge:
   - auth-image-patch.yaml
   - gtfs-image-patch.yaml
+  - loyalty-image-patch.yaml
